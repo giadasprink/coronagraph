@@ -21,7 +21,7 @@ def count_rates(Ahr, lamhr, solhr,
                 lammax = 2.5,
                 Res    = 70.0,
                 diam   = 10.0,
-                Tput   = 0.05,
+                Tput   = 0.20,
                 C      = 1e-10,
                 IWA    = 3.0,
                 OWA    = 20.0,
@@ -37,7 +37,7 @@ def count_rates(Ahr, lamhr, solhr,
                 MzV    = 23.0,
                 MezV   = 22.0,
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
-                SILENT = False, NIR = True, THERMAL = False, GROUND = False):
+                SILENT = False, NIR = True, THERMAL = True, GROUND = False):
     """
     Runs coronagraph model (Robinson et al., 2016) to calculate planet and noise
     photon count rates for specified telescope and system parameters.

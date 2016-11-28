@@ -114,13 +114,13 @@ def make_noise(Ahr, lamhr, solhr, telescope, planet, star, wantsnr=10.0, FIX_OWA
         return None
 
     # Set Quantum Efficiency
-    q = np.zeros(Nlam)
-    for j in range(Nlam):
-        if (lam[j] <= 0.7):
-            q[j] = qe
-        else:
-            q[j] = qe*(1.0 - (lam[j]-0.7)/(1.0-0.7))
-    if q[j] < 0.0: q[j] = 0.
+    q = np.zeros(Nlam) + qe
+   # for j in range(Nlam):
+   #     if (lam[j] <= 0.7):
+   #         q[j] = qe
+   #     else:
+   #         q[j] = qe*(1.0 - (lam[j]-0.7)/(1.0-0.7))
+   # if q[j] < 0.0: q[j] = 0.
 
     # Set Dark current and Read noise
     De = np.zeros(Nlam) + De
@@ -134,7 +134,7 @@ def make_noise(Ahr, lamhr, solhr, telescope, planet, star, wantsnr=10.0, FIX_OWA
         iNIR  = (lam > 1.0)
         theta[iVIS] = lammin/1e6/diam/2.*(180/np.pi*3600.)
         theta[iNIR] = 1.0/1e6/diam/2.*(180/np.pi*3600.)
-        q[iNIR]  = qe
+      #  q[iNIR]  = qe
         Re[iNIR] = 2.                # Different from vis detector
         De[iNIR] = 1e-3              # Different from vis detector
 

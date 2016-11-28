@@ -608,17 +608,17 @@ def set_quantum_efficiency(lam, qe, NIR=False, qe_nir=0.9):
         Wavelength-dependent instrumental quantum efficiency
     """
     Nlam = len(lam)
-    q = np.zeros(Nlam)
-    for j in range(Nlam):
-        if (lam[j] <= 0.7):
-            q[j] = qe
-        else:
-            q[j] = qe*(1.0 - (lam[j]-0.7)/(1.0-0.7))
-    if q[j] < 0.0: q[j] = 0.
+    q = np.zeros(Nlam) + qe
+ #   for j in range(Nlam):
+ #       if (lam[j] <= 0.7):
+ #           q[j] = qe
+ #       else:
+ #           q[j] = qe*(1.0 - (lam[j]-0.7)/(1.0-0.7))
+ #   if q[j] < 0.0: q[j] = 0.
 
-    if NIR:
-        iNIR  = (lam > 1.0)
-        q[iNIR]  = qe_nir
+ #   if NIR:
+ #       iNIR  = (lam > 1.0)
+ #       q[iNIR]  = qe_nir
 
     return q
 
