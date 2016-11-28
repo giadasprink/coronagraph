@@ -19,6 +19,11 @@ All planets are assumed to be orbiting the sun except as noted (the O2 False Pos
 
 When the ground based option is selected from the Observation menu, the simulator accounts for Earth’s atmospheric transmittance and downwelling thermal radiation from the atmosphere. Atmospheric airglow is not yet included.
 
+The Exposure Time tab shows the required integration time as a function of wavelength to obtain a signal-to-noise ratio specified
+by the slider in the "Exposure Time Calculator" tab. This signal-to-noise ratio is only used to update the Exposure Time plot,
+but it will not change the signal-to-noise on the spectrum itself. The noise on the spectrum is calculated with the Integration
+Time slider under the Observation menu. Users can adjusting the Integration Time slider according to the information in the Exposure Time plot. 
+
 ------------
 
 Details on input spectra are:
