@@ -65,6 +65,7 @@ iwa = 2. #IWA scaling factor - SLIDER
 De = 1e-4 # dark current - 
 Re = 0.1 # read noise - 
 Dtmax = 1.0 # max single exposure time - SLIDER
+wantsnr = 10. #for exposure time calculator - SLIDER
 
 # Template
 template = ''
@@ -110,7 +111,7 @@ Rs_ = Rs
 
 # Run coronagraph with default LUVOIR telescope (aka no keyword arguments)
 lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-    cg.count_rates(Ahr, lamhr, solhr, alpha, Phi, Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De=De, Re=Re, Dtmax=Dtmax, GROUND=False, THERMAL=True)
+    cg.count_rates(Ahr, lamhr, solhr, alpha, Phi, Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De=De, Re=Re, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr)
 # Calculate background photon count rates
 cb = (cz + cez + csp + cD + cR + cth)
 # Convert hours to seconds
@@ -127,6 +128,7 @@ lastCratio = Cratio
 snr_ymax = np.max(Cratio)*1e9
 yrange=[snr_ymax]
 planet = ColumnDataSource(data=dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts))
+expplanet = ColumnDataSource(data=dict(lam=lam, DtSNR=DtSNR))
 plotyrange = ColumnDataSource(data = dict(yrange=yrange))
 lamC = lastlam * 0.
 CratioC = lastCratio * 0.
@@ -134,6 +136,7 @@ global lamC
 global CratioC
 #global snr_plot
 compare = ColumnDataSource(data=dict(lam=lamC, cratio=Cratio*1e9)) #test
+expcompare = ColumnDataSource(data=dict(lam=lam, DtSNR=DtSNR*(-1000000)))
 textlabel = ColumnDataSource(data=dict(label = planet_label))
 
 
@@ -147,23 +150,34 @@ snr_plot = Figure(plot_height=500, plot_width=750,
                   tools="crosshair,pan,reset,resize,save,box_zoom,wheel_zoom,hover",
                   toolbar_location='right', x_range=[0.2, 3.0], y_range=[-0.2, 1])
 
+exp_plot = Figure(plot_height=500, plot_width=750, 
+                  tools="crosshair,pan,reset,resize,save,box_zoom,wheel_zoom,hover",
+                  toolbar_location='right', x_range=[0.2, 3.0], y_range=[1e-4, 10000],
+                  y_axis_type="log")
+
 snr_plot.background_fill_color = "beige"
 snr_plot.background_fill_alpha = 0.5
 snr_plot.yaxis.axis_label='F_p/F_s (x10^9)' 
 snr_plot.xaxis.axis_label='Wavelength [micron]'
 snr_plot.title.text = 'Planet Spectrum: Earth' #initial spectrum is Earth
 
+exp_plot.background_fill_color = "beige"
+exp_plot.background_fill_alpha = 0.5
+exp_plot.yaxis.axis_label='Integration time for SNR = 10 [hours]' 
+exp_plot.xaxis.axis_label='Wavelength [micron]'
+exp_plot.title.text = 'Planet Spectrum: Earth' #initial spectrum is Earth
 
 snr_plot.line('lam','cratio',source=compare,line_width=2.0, color="navy", alpha=0.7)
 snr_plot.line('lam','cratio',source=planet,line_width=2.0, color="darkgreen", alpha=0.7)
 snr_plot.circle('lam', 'spec', source=planet, fill_color='lightgreen', line_color='black', size=8) 
-snr_plot.segment('lam', 'downerr', 'lam', 'uperr', source=planet, line_width=1, line_color='grey', line_alpha=0.5) 
+snr_plot.segment('lam', 'downerr', 'lam', 'uperr', source=planet, line_width=1, line_color='grey', line_alpha=0.5)
 
-#rectangle behind annotation:
-#try:
-#   lastcomparison
-#except NameError:
-#snr_plot.quad(top = [-0.1], left=[0.2], right=[3.5], bottom=[-0.2], color="white")
+exp_plot.line('lam','DtSNR',source=expcompare,line_width=2.0, color="navy", alpha=0.7)
+exp_plot.line('lam','DtSNR',source=expplanet,line_width=2.0, color="darkgreen", alpha=0.7)
+#snr_plot.circle('lam', 'spec', source=planet, fill_color='lightgreen', line_color='black', size=8) 
+#snr_plot.segment('lam', 'downerr', 'lam', 'uperr', source=planet, line_width=1, line_color='grey', line_alpha=0.5)
+
+#text on plot
 glyph = Text(x=0.25, y=-0.19, text="label", text_font_size='9pt', text_font_style='bold', text_color='blue')
 #attempting to outline the text here for ease of visibility... 
 glyph2 = Text(x=0.245, y=-0.19, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
@@ -187,6 +201,11 @@ hover.tooltips = [
    ('speckle noise', '@csp{int}'),
    ('thermal', '@cth{int}')
 ]
+
+ptab1 = Panel(child=snr_plot, title='SNR Plot')
+ptab2 = Panel(child=exp_plot, title='Exposure Time')
+ptabs = Tabs(tabs=[ptab1, ptab2])
+show(ptabs)
 
 #show(snr_plot) 
 
@@ -223,7 +242,9 @@ def i_clicked_a_button(new):
     link_box.text = """Your file is <a href='http://jt-astro.science/outputs/"""+filename+""".gz'>"""+filename+""".gz</a>. """
 
 
-  
+###################
+#Update Plots Based on User Input
+###################
 
 def update_data(attrname, old, new):
    #how do I make it so that it will update the spectrum file here but only if it CHANGES?
@@ -256,11 +277,6 @@ def update_data(attrname, old, new):
     global lastcomparison
     
 # Read-in new spectrum file only if changed
-#'BBody' variable some of these have in place of solhr is
-# because not all of these read in a stellar spectrum from their files
-# so the coronagraph model can use a blackbody instead (note: update so that
-# it's self-consistently done for stellar types once we get planets around other
-# stars if that becomes important, which I think it will)
     if template.value != lasttemplate:
        if template.value == 'Earth':
           fn = 'earth_quadrature_radiance_refl.dat'
@@ -302,7 +318,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = "Bbody"
           semimajor.value = 1.
           radius.value = 1.
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -317,7 +332,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = "Bbody"
           semimajor.value = 1.
           radius.value = 1.
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -333,7 +347,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = "BBody"
           semimajor.value = 1.
           radius.value = 1.
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -348,7 +361,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = "BBody"
           semimajor.value = 1.
           radius.value = 1.
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -363,7 +375,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = "BBody"
           semimajor.value = 1.52
           radius.value = 0.53
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -378,7 +389,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = 'Bbody'
           semimajor.value = 1.52
           radius.value = 0.53         
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -393,7 +403,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = 'Bbody'
           semimajor.value = 5.46
           radius.value = 10.97
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -408,7 +417,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = 'Bbody'
           semimajor.value = 9.55
           radius.value = 9.14
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -423,7 +431,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = 'Bbody'
           semimajor.value = 19.21
           radius.value = 3.98
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -438,7 +445,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_ = model[:,0]
           Ahr_ = model[:,1]
-          solhr_ = 'Bbody'
           semimajor.value = 29.8
           radius.value = 3.86
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -454,7 +460,6 @@ def update_data(attrname, old, new):
           Ahr_ = model[:,1]
           lamhr_ = lamhr_ / 1000. #convert to microns
           Ahr_ = Ahr_ * 0.67 #convert to geometric albedo
-          solhr_ = 'Bbody'
           semimajor.value = 2.0
           radius.value = 3.86
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -470,7 +475,6 @@ def update_data(attrname, old, new):
           Ahr_ = model[:,1]
           lamhr_ = lamhr_ / 1000. #convert to microns
           Ahr_ = Ahr_ * 0.67 #convert to geometric albedo
-          solhr_ = 'Bbody'
           semimajor.value = 1.0
           radius.value = 3.86
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -486,7 +490,6 @@ def update_data(attrname, old, new):
           Ahr_ = model[:,1]
           lamhr_ = lamhr_ / 1000. #convert to microns
           Ahr_ = Ahr_ * 0.67 #convert to geometric albedo
-          solhr_ = 'Bbody'
           semimajor.value = 1.0
           radius.value = 3.86
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -500,7 +503,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=1)
           lamhr_ = model[:,1]
           Ahr_ = model[:,3]
-          solhr_ = 'Bbody'
           semimajor.value = 0.8
           radius.value = 10.97
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -514,7 +516,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=1)
           lamhr_ = model[:,1]
           Ahr_ = model[:,3]
-          solhr_ = 'Bbody'
           semimajor.value = 2.0
           radius.value = 10.97
           Teff_  = 5780.   # Sun-like Teff (K)
@@ -661,7 +662,7 @@ def update_data(attrname, old, new):
           Teff_  = 3040.   # Sun-like Teff (K)
           Rs_    = 0.141      # star radius in solar radii
           solhr_ =  cg.noise_routines.Fstar(lamhr_, Teff_, Rs_, semimajor.value, AU=True)
-          planet_label = ['Synthetic spectrum generated by E. Schwieterman (Meadows et al. 2016)']            
+          planet_label = ['Synthetic spectrum generated by E. Schwieterman based on work by P. Gao (Meadows et al. 2016; Gao et al. 2015)']            
 
        if template.value =='Proxima Cen b Earth':
           # this one needs a weighted average
@@ -754,10 +755,6 @@ def update_data(attrname, old, new):
        ground_based_ = False
     if ground_based.value == "Yes":
        ground_based_ = True
-
-#    if ground_based_ == True:
-#       lammin=min(lamhr_)+0.05 #edge issues worse when ground based turned on 
-#       lammax=max(lamhr_)-0.25 
     
     # Run coronagraph 
     lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
@@ -778,18 +775,15 @@ def update_data(attrname, old, new):
     lastCratio = Cratio
     global lastlam
     global lastCratio
-    if time_calc.value == 'No':
-       planet.data = dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts)
-    if time_calc.value == 'Yes':
-       print 'planet.data will contain DtSNR'
+    planet.data = dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts)
+    expplanet.data = dict(lam=lam, DtSNR=DtSNR)
      #make the data the time for a given SNR if user wants this:
-       planet.data = dict(lam=lam, cratio=DtSNR, spec=spec*(-10000.), downerr=(spec-sig)*(-10000.), uperr=(spec+sig)*(-10000.))
-       print DtSNR
     textlabel.data = dict(label=planet_label)
 
     format_button_group.active = None
     lasttemplate = template.value
 
+    #IF YOU WANT COMPARISON SPECTRUM:
     #print snr_plot.y_ran
     if comparison.value != lastcomparison:
       if comparison.value == 'Earth':
@@ -800,7 +794,6 @@ def update_data(attrname, old, new):
           radhr_c = model[:,1]
           solhr_c = model[:,2]
           Ahr_c   = np.pi*(np.pi*radhr_c/solhr_c)
-          solhr_c = 'Bbody'
           semimajor_c = 1.
           radius_c = 1.
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -818,7 +811,6 @@ def update_data(attrname, old, new):
           Ahr_c = (Fhr_c/solhr_c)/0.8 
           lamhr_c = lamhr_c[::-1]
           Ahr_c = Ahr_c[::-1]
-          solhr_c = "Bbody"
           semimajor_c = 0.72
           radius_c = 0.94
           Teff_c = 5780.   # Sun-like Teff (K)
@@ -832,7 +824,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 1.
           radius_c = 1.
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -846,7 +837,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 1.
           radius_c = 1.
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -861,7 +851,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = "BBody"
           semimajor_c = 1.
           radius_c = 1.
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -876,7 +865,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = "BBody"
           semimajor_c = 1.
           radius_c = 1.
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -891,7 +879,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 1.52
           radius_c = 0.53
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -906,7 +893,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=8)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 1.52
           radius_c = 0.53         
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -921,7 +907,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 5.46
           radius_c = 10.97
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -936,7 +921,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 9.55
           radius_c = 9.14
           Teff_c = 5780.   # Sun-like Teff (K)
@@ -951,7 +935,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 19.21
           radius_c = 3.98
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -966,7 +949,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = 'Bbody'
           semimajor_c = 29.8
           radius_c = 3.86
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -983,7 +965,6 @@ def update_data(attrname, old, new):
           Ahr_c = model[:,1]
           lamhr_c = lamhr_c / 1000. #convert to microns
           Ahr_c = Ahr_c * 0.67 #convert to geometric albedo
-          solhr_c = 'Bbody'
           semimajor_c = 1.0
           radius_c = 3.86
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -999,7 +980,6 @@ def update_data(attrname, old, new):
           Ahr_c = model[:,1]
           lamhr_c = lamhr_c / 1000. #convert to microns
           Ahr_c = Ahr_c* 0.67 #convert to geometric albedo
-          solhr_c = 'Bbody'
           semimajor_c = 1.0
           radius_c = 3.86
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -1015,7 +995,6 @@ def update_data(attrname, old, new):
           Ahr_c = model[:,1]
           lamhr_c = lamhr_c / 1000. #convert to microns
           Ahr_c = Ahr_c * 0.67 #convert to geometric albedo
-          solhr_c = 'Bbody'
           semimajor_c = 2.0
           radius_c = 3.86
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -1029,7 +1008,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=1)
           lamhr_c = model[:,1]
           Ahr_c = model[:,3]
-          solhr_c = 'Bbody'
           semimajor_c = 0.8
           radius_c = 10.97
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -1043,7 +1021,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=1)
           lamhr_c = model[:,1]
           Ahr_c = model[:,3]
-          solhr_c = 'Bbody'
           semimajor_c = 2.0
           radius_c = 10.97
           Teff_c  = 5780.   # Sun-like Teff (K)
@@ -1057,7 +1034,6 @@ def update_data(attrname, old, new):
           model = np.loadtxt(fn, skiprows=0)
           lamhr_c = model[:,0]
           Ahr_c = model[:,1]
-          solhr_c = "Bbody"
           semimajor_c = 1.72 #Earth equivalent distance for F star
           radius_c = 1.
           Teff_c  = 7050.   # F2V Teff (K)
@@ -1289,20 +1265,17 @@ def update_data(attrname, old, new):
       print 'ran comparison coronagraph noise model'
 
     if comparison.value == 'none':
-        lamC = lamhr_ * 0.
-        CratioC = Ahr_ * 0.
-        DtSNRC = DtSNR * 0.
+       lamC = lamhr_ * 0.
+       CratioC = Ahr_ *0.
+       DtSNRC = DtSNR * 0.
 
 
     lastcomparison = comparison.value
-    print "constructing compare.data"
-    #print lamC
-    #print CratioC
+
     compare.data = dict(lam=lamC, cratio=CratioC*1e9)
-    if time_calc.value == 'Yes':
-      compare.data = dict(lam=lamC, cratio=DtSNRC)
+    expcompare.data = dict(lam=lamC, DtSNR=DtSNRC)
         
-    #PLOT UPDATES    
+    #######PLOT UPDATES#######    
     global snr_ymax_
     global snr_ymin_
 
@@ -1321,8 +1294,10 @@ def update_data(attrname, old, new):
 
     if comparison.value != 'none':
        snr_plot.title.text = 'Planet Spectrum: '+template.value +' and comparison spectrum '+comparison.value
+       exp_plot.title.text = 'Planet Spectrum: '+template.value +' and comparison spectrum '+comparison.value
     if comparison.value == 'none':
-      snr_plot.title.text = 'Planet Spectrum: '+template.value 
+      snr_plot.title.text = 'Planet Spectrum: '+template.value
+      exp_plot.title.text =  'Planet Spectrum: '+template.value
     #snr_plot.y_range.start = snr_ymin_ - 0.1*snr_ymax_
     if template.value == 'Early Mars' or template.value == 'Mars':
        if comparison.value == 'none' or comparison.value == 'Early Mars' or comparison.value == 'Mars':
@@ -1330,25 +1305,7 @@ def update_data(attrname, old, new):
     else:
        snr_plot.y_range.end = snr_ymax_ + 0.2*snr_ymax_
 
-    if time_calc.value == 'No':
-       snr_plot.yaxis.axis_label='F_p/F_s (x10^9)'
-    #   snr_plot.y_axis_type = "linear"
 
-    if time_calc.value == 'Yes':
-       given_wl = 0.5
-       closest = min(lam, key=lambda x:abs(x-0.5))
-       index = np.where(lam == closest)
-       if spec[index] == 0.0:
-          index = np.where(spec != 0.0)
-          index = min(index)
-          
-       timemax = np.max([np.max(DtSNR[index]), np.max(DtSNRC[index])])
-       snr_plot.yaxis.axis_label='Integration Time for SNR = '+str(want_snr.value)
-       snr_plot.y_range.end = timemax + 5*timemax
-       #snr_plot.y_range.end = 1000.
-
-   
- 
     
 
        
@@ -1410,14 +1367,14 @@ dtmax  = Slider(title="Maximum single exposure time (hours)", value = 1, start=0
 dtmax.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-want_snr  = Slider(title="Desired signal-to-noise ratio? (only used if plotting exposure time)", value = 10, start=0.5, end=100., step=0.5, callback_policy='mouseup') 
-dtmax.callback = CustomJS(args=dict(source=source), code="""
+want_snr  = Slider(title="Desired signal-to-noise ratio? (only used for exposure time plot)", value = 10, start=0.5, end=100., step=0.5, callback_policy='mouseup') 
+want_snr.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
 #ground based choice
 ground_based = Select(title="Simulate ground-based observation?", value="No", options=["No",  "Yes"])
 
-time_calc = Select(title="Plot time for given SNR?", value="No", options=["No",  "Yes"])
+#time_calc = Select(title="Plot time for given SNR?", value="No", options=["No",  "Yes"])
 
 
 #select menu for planet
@@ -1430,19 +1387,18 @@ oo = column(children=[exptime, diameter, resolution, temperature, ground_based])
 pp = column(children=[template, comparison, distance, radius, semimajor, exozodi]) 
 qq = column(children=[instruction0, text_input, instruction1, format_button_group, instruction2, link_box])
 ii = column(children=[inner, outer,  dtmax])
-ee = column(children=[time_calc, want_snr])
+ee = column(children=[want_snr])
 
 observation_tab = Panel(child=oo, title='Observation')
 planet_tab = Panel(child=pp, title='Planet')
 instrument_tab = Panel(child=ii, title='Instrumentation')
 download_tab = Panel(child=qq, title='Download')
-time_tab = Panel(child=ee, title='ET Calculator')
+time_tab = Panel(child=ee, title='Exposure Time Calculator')
 
 for w in [text_input]: 
     w.on_change('value', change_filename)
 format_button_group.on_click(i_clicked_a_button)
 
-#gna - added this
 for ww in [template]: 
     ww.on_change('value', update_data)
 
@@ -1452,10 +1408,7 @@ for www in [comparison]:
 for gg in [ground_based]: 
     gg.on_change('value', update_data)
 
-for tt in [time_calc]: 
-    tt.on_change('value', update_data)
-
 
 inputs = Tabs(tabs=[ planet_tab, observation_tab, instrument_tab, time_tab, download_tab ])
 
-curdoc().add_root(row(inputs, snr_plot)) 
+curdoc().add_root(row(inputs, ptabs)) 
