@@ -299,6 +299,7 @@ def cdark(De, X, lam, D, theta, DNhpix, IMAGE=False, CIRC=False):
     # If not in imaging mode
     if ~IMAGE:
         Npix = 2*DNhpix*Npix
+    
     return De*Npix
 
 def cread(Re, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=False):
