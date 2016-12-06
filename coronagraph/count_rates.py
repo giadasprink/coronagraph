@@ -7,14 +7,14 @@ from .noise_routines import Fstar, Fplan, FpFs, cplan, czodi, cezodi, cspeck, \
     cdark, cread, ctherm, ccic, f_airy, ctherm_earth, construct_lam, \
     set_quantum_efficiency, set_read_noise, set_dark_current, set_lenslet, \
     set_throughput, set_atmos_throughput, get_thermal_ground_intensity, \
-    exptime_element
+    exptime_element, lambertPhaseFunction
 import pdb
 import os
 
 __all__ = ['count_rates']
 
 def count_rates(Ahr, lamhr, solhr,
-                alpha, Phi, Rp, Teff, Rs, r, d, Nez,
+                alpha, Rp, Teff, Rs, r, d, Nez,
                 mode   = "IFS",
                 filter_wheel = None,
                 lammin = 0.4,
@@ -37,7 +37,7 @@ def count_rates(Ahr, lamhr, solhr,
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
-                SILENT = False, NIR = False, THERMAL = True, GROUND = False):
+                SILENT = False, NIR = True, THERMAL = True, GROUND = False):
     """
     Runs coronagraph model (Robinson et al., 2016) to calculate planet and noise
     photon count rates for specified telescope and system parameters.
@@ -53,7 +53,7 @@ def count_rates(Ahr, lamhr, solhr,
     alpha : float
         Planet phase angle [deg]
     Phi : float
-        Planet phase function
+        Planet phase function (depends on alpha!!)
     Rp : float
         Planet radius [R_earth]
     Teff : float
@@ -153,6 +153,9 @@ def count_rates(Ahr, lamhr, solhr,
         Exposure time required to get desired S/N (wantsnr) [hours]
     """
 
+    #calculate phase function
+    Phi = lambertPhaseFunction(alpha)
+    #Phi = 1.
     convolution_function = downbin_spec
     #convolution_function = degrade_spec
 

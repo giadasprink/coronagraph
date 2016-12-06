@@ -294,8 +294,10 @@ def cdark(De, X, lam, D, theta, DNhpix, IMAGE=False, CIRC=False):
         Omega = np.pi*(X*lam*1e-6/D*180.*3600./np.pi)**2.
     else:
         # square aperture diameter (arcsec**2)
-        Omega = 4.*(X*lam*1e-6/D*180.*3600./np.pi)**2.
+        Omega = 4.*(X*lam*1e-6/D*180.*3600./np.pi)**2. 
     Npix  = Omega/np.pi/theta**2.
+    print Omega
+    print theta
     # If not in imaging mode
     if ~IMAGE:
         Npix = 2*DNhpix*Npix
@@ -649,16 +651,16 @@ def set_dark_current(lam, De, lammax, Tdet, NIR=False, De_nir=1e-3):
     """
     De = np.zeros(len(lam)) + De
 
-    if NIR:
-        iNIR  = (lam > 1.0)
-        # Set dark current based on NIR detector properties
-        if ( lammax <= 2.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-120.)*7./100. )
-        if ( lammax > 2.0 ) and ( lammax <= 4.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-80.)*9./140. )
-        if ( lammax > 4.0 ) and ( lammax <= 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-40.)*11./140. )
-        if ( lammax > 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-30.)*11./70. )
+   # if NIR:
+   #     iNIR  = (lam > 1.0)
+   #     # Set dark current based on NIR detector properties
+   #     if ( lammax <= 2.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-120.)*7./100. )
+   #     if ( lammax > 2.0 ) and ( lammax <= 4.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-80.)*9./140. #)
+   #     if ( lammax > 4.0 ) and ( lammax <= 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-40.)*11./140. )
+    #    if ( lammax > 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-30.)*11./70. )
         # Don't let dark current fall below a threshold
-        iDe = (De[iNIR] < De_nir)
-        De[iNIR][iDe] = De_nir
+    #    iDe = (De[iNIR] < De_nir)
+    #    De[iNIR][iDe] = De_nir
 
     return De
 

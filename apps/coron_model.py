@@ -120,7 +120,7 @@ Rs_ = Rs
 
 # Run coronagraph with default LUVOIR telescope 
 lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-    cg.count_rates(Ahr, lamhr, solhr, alpha, Phi, Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De=De, Re=Re, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr)
+    cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De=De, Re=Re, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr)
 # Calculate background photon count rates
 cb = (cz + cez + csp + cD + cR + cth)
 # Convert hours to seconds
@@ -157,7 +157,7 @@ textlabel = ColumnDataSource(data=dict(label = planet_label))
 #plots spectrum and exposure time
 snr_plot = Figure(plot_height=500, plot_width=750, 
                   tools="crosshair,pan,reset,resize,save,box_zoom,wheel_zoom,hover",
-                  toolbar_location='right', x_range=[0.2, 3.0], y_range=[-0.2, 1])
+                  toolbar_location='right', x_range=[0.2, 3.0], y_range=[-0.2, 0.4])
 
 exp_plot = Figure(plot_height=500, plot_width=750, 
                   tools="crosshair,pan,reset,resize,save,box_zoom,wheel_zoom,hover",
@@ -760,7 +760,7 @@ def update_data(attrname, old, new):
     
     # Run coronagraph 
     lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-        cg.count_rates(Ahr_, lamhr_, solhr_, alpha, Phi, radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
+        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
 
 
     # Calculate background photon count rates
@@ -1258,10 +1258,10 @@ def update_data(attrname, old, new):
          distance_c
       except NameError:
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, Phi, radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
+       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
       else:    
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, Phi, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
+       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
 
 
       

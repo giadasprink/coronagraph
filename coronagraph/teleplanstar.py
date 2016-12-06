@@ -206,6 +206,7 @@ def lambertPhaseFunction(alpha):
         Lambertian phase function
     """
     alpha = alpha * np.pi / 180.
+    print 'phi = ' +str((np.sin(alpha) + (np.pi - alpha) * np.cos(alpha)) / np.pi)
     return (np.sin(alpha) + (np.pi - alpha) * np.cos(alpha)) / np.pi
 
 class Planet(object):
