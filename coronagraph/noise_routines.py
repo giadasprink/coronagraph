@@ -296,8 +296,6 @@ def cdark(De, X, lam, D, theta, DNhpix, IMAGE=False, CIRC=False):
         # square aperture diameter (arcsec**2)
         Omega = 4.*(X*lam*1e-6/D*180.*3600./np.pi)**2. 
     Npix  = Omega/np.pi/theta**2.
-    print Omega
-    print theta
     # If not in imaging mode
     if ~IMAGE:
         Npix = 2*DNhpix*Npix

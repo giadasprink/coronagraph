@@ -17,6 +17,7 @@ def count_rates(Ahr, lamhr, solhr,
                 alpha, Rp, Teff, Rs, r, d, Nez,
                 mode   = "IFS",
                 filter_wheel = None,
+                Phi = -1, #chosen as a value a user would never set 
                 lammin = 0.4,
                 lammax = 2.5,
                 Res    = 70.0,
@@ -53,7 +54,7 @@ def count_rates(Ahr, lamhr, solhr,
     alpha : float
         Planet phase angle [deg]
     Phi : float
-        Planet phase function (depends on alpha!!)
+        Planet phase function [deg] (will default to calculating with alpha if not set)
     Rp : float
         Planet radius [R_earth]
     Teff : float
@@ -152,9 +153,10 @@ def count_rates(Ahr, lamhr, solhr,
     DtSNR : ndarray
         Exposure time required to get desired S/N (wantsnr) [hours]
     """
-
-    #calculate phase function
-    Phi = lambertPhaseFunction(alpha)
+    if Phi == -1: #check if user has manually set Phi (they'd never set it to -1)
+        #calculate phase function
+        Phi = lambertPhaseFunction(alpha)
+        
     #Phi = 1.
     convolution_function = downbin_spec
     #convolution_function = degrade_spec
