@@ -1281,7 +1281,7 @@ def update_data(attrname, old, new):
     CratioC_ok = CratioC_ok[~np.isnan(CratioC_ok)]
     print 'snr_ymax_',  np.max([np.max(Cratio_ok)*1e9, np.max(CratioC_ok)*1e9])
     print 'snr_ymin_',  np.min([np.min(Cratio_ok)*1e9, np.min(CratioC_ok)*1e9])
-    snr_ymax_ = np.max([np.max(Cratio_ok)*1e9, np.max(CratioC_ok)*1e9])
+    snr_ymax_ = np.max([np.max(Cratio_ok)*1e9*1.5, np.max(CratioC_ok)*1e9*1.5])
     snr_ymin_ = np.min([np.min(CratioC_ok)*1e9, np.min(CratioC_ok)*1e9])
     snr_plot.y_range.start = -0.2
 

@@ -38,7 +38,8 @@ def count_rates(Ahr, lamhr, solhr,
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
-                SILENT = False, NIR = True, THERMAL = True, GROUND = False):
+                SILENT = False, NIR = True, UV=True, THERMAL = True,
+                GROUND = False):
     """
     Runs coronagraph model (Robinson et al., 2016) to calculate planet and noise
     photon count rates for specified telescope and system parameters.
@@ -201,7 +202,7 @@ def count_rates(Ahr, lamhr, solhr,
     Re = set_read_noise(lam, Re, NIR=NIR)
 
     # Set Angular size of lenslet
-    theta = set_lenslet(lam, lammin, diam, NIR=NIR)
+    theta = set_lenslet(lam, lammin, diam, NIR=NIR, UV=UV)
 
     # Set throughput
     sep  = r/d*np.sin(alpha*np.pi/180.)*np.pi/180./3600. # separation in radians

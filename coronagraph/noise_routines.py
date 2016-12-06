@@ -649,14 +649,14 @@ def set_dark_current(lam, De, lammax, Tdet, NIR=False, De_nir=1e-3):
     """
     De = np.zeros(len(lam)) + De
 
-   # if NIR:
+  #  if NIR:
    #     iNIR  = (lam > 1.0)
-   #     # Set dark current based on NIR detector properties
+        # Set dark current based on NIR detector properties
    #     if ( lammax <= 2.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-120.)*7./100. )
-   #     if ( lammax > 2.0 ) and ( lammax <= 4.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-80.)*9./140. #)
-   #     if ( lammax > 4.0 ) and ( lammax <= 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-40.)*11./140. )
+   #     if ( lammax > 2.0 ) and ( lammax <= 4.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-80.)*9./140. )
+    #    if ( lammax > 4.0 ) and ( lammax <= 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-40.)*11./140. )
     #    if ( lammax > 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-30.)*11./70. )
-        # Don't let dark current fall below a threshold
+    #    # Don't let dark current fall below a threshold
     #    iDe = (De[iNIR] < De_nir)
     #    De[iNIR][iDe] = De_nir
 
@@ -691,7 +691,7 @@ def set_read_noise(lam, Re, NIR=False, Re_nir=2.):
     return Re
 
 def set_lenslet(lam, lammin, diam,
-                NIR=False, lammin_nir=1.0):
+                NIR=False, UV=False, lammin_nir=1.0, lammin_uv = 0.2):
     """
     Set the angular size of the lenslet
 
@@ -714,16 +714,24 @@ def set_lenslet(lam, lammin, diam,
         Angular size of lenslet
     """
     Nlam = len(lam)
+    theta = np.zeros(Nlam)
+    if UV:
+        lammin_vis = 0.4
+    else:
+        lammin_vis = lammin
+    theta[0:] = lammin_vis/1.e6/diam/2.*(180/np.pi*3600.) # assumes sampled at ~lambda/2D (arcsec)
+
     if NIR:
-        theta = np.zeros(Nlam)
-        iVIS  = (lam <= 1.0)
+        
         iNIR  = (lam > 1.0)
-        theta[iVIS] = lammin/1e6/diam/2.*(180/np.pi*3600.)
         # If there are wavelength bins longer than 1um:
         theta[iNIR] = lammin_nir/1e6/diam/2.*(180/np.pi*3600.)
-    else:
-        theta = lammin/1.e6/diam/2.*(180/np.pi*3600.) # assumes sampled at ~lambda/2D (arcsec)
-
+    if UV:
+      #  theta = np.zeros(Nlam)
+        iUV  = (lam > 0.2) & (lam <= 0.4 )
+        # if there are wavelength bins shorter than 0.4um:
+        theta[iUV] = lammin_uv/1e6/diam/2.*(180/np.pi*3600.)
+        
     return theta
 
 def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
