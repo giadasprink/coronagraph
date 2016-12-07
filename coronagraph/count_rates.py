@@ -37,6 +37,8 @@ def count_rates(Ahr, lamhr, solhr,
                 qe     = 0.9,
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22
+                Res_NIR = -1, 
+                Res_UV = -1, 
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
                 SILENT = False, NIR = True, UV=True, THERMAL = True,
                 GROUND = False):
@@ -157,6 +159,10 @@ def count_rates(Ahr, lamhr, solhr,
     if Phi == -1: #check if user has manually set Phi (they'd never set it to -1)
         #calculate phase function
         Phi = lambertPhaseFunction(alpha)
+
+    #check if user wants different Res_UV and Res_NIR:
+    if Res_UV == -1: Res_UV = Res
+    if Res_NIR == -1: Res_NIR = Res
         
     #Phi = 1.
     convolution_function = downbin_spec
@@ -184,9 +190,10 @@ def count_rates(Ahr, lamhr, solhr,
     # fraction of planetary signal in Airy pattern
     fpa = f_airy(X)
 
+
     # Set wavelength grid
     if COMPUTE_LAM:
-        lam, dlam = construct_lam(lammin, lammax, Res)
+        lam, dlam = construct_lam(lammin, lammax, Res, UV=UV, NIR=NIR, Res_UV = Res_UV, Res_NIR = Res_NIR)
     elif IMAGE:
         pass
     else:

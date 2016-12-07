@@ -47,7 +47,9 @@ Dt = 24.0 # - SLIDER
 
 # Telescopes params
 diam = 10. # mirror diameter - SLIDER
-Res = 150. # resolution - SLIDER
+Res = 150. # vis resolution - SLIDER
+Res_UV = 20. # UV resolution - SLIDER
+Res_NIR = 100. #NIR resolution - SLIDER
 Tsys = 270. # system temperature - SLIDER
 
 # Planet params
@@ -110,7 +112,7 @@ Rs_ = Rs
 
 # Run coronagraph with default LUVOIR telescope 
 lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-    cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De=De, Re=Re, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr)
+    cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, Res_UV = Res_UV, Res_NIR = Res_NIR, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De=De, Re=Re, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr)
 # Calculate background photon count rates
 cb = (cz + cez + csp + cD + cR + cth)
 # Convert hours to seconds
@@ -247,7 +249,7 @@ def i_clicked_a_button(new):
 
 def update_data(attrname, old, new):
     print 'Updating model for exptime = ', exptime.value, ' for planet with R = ', radius.value, ' at distance ', distance.value, ' parsec '
-    print '                   exozodi = ', exozodi.value, 'diameter (m) = ', diameter.value, 'resolution = ', resolution.value
+    print '                   exozodi = ', exozodi.value, 'diameter (m) = ', diameter.value, 'resolution = ', resolution.value, 'resolution uv =', resolution_UV.value, 'resolution nir =', resolution_NIR.value,
     print '                   temperature (K) = ', temperature.value, 'IWA = ', inner.value, 'OWA = ', outer.value
     print 'You have chosen planet spectrum: ', template.value
     print 'You have chosen comparison spectrum: ', comparison.value
@@ -750,7 +752,7 @@ def update_data(attrname, old, new):
     
     # Run coronagraph 
     lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
+        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
 
 
     # Calculate background photon count rates
@@ -1248,10 +1250,10 @@ def update_data(attrname, old, new):
          distance_c
       except NameError:
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
+       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
       else:    
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, Res=resolution.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
+       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De=De, Re=Re, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value)
 
 
       
@@ -1336,8 +1338,16 @@ diameter  = Slider(title="Mirror Diameter (meters)", value = 10.0, start=0.5, en
 diameter.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-resolution  = Slider(title="Telescope Resolution (R)", value = 150.0, start=10.0, end=300., step=5., callback_policy='mouseup') 
+resolution  = Slider(title="Telescope Visible Resolution (R)", value = 150.0, start=10.0, end=300., step=5., callback_policy='mouseup') 
 resolution.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
+resolution_UV  = Slider(title="Telescope UV Resolution (R)", value = 20.0, start=10.0, end=300., step=5., callback_policy='mouseup') 
+resolution_UV.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
+resolution_NIR  = Slider(title="Telescope NIR Resolution (R)", value = 100.0, start=10.0, end=300., step=5., callback_policy='mouseup') 
+resolution_NIR.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
 temperature  = Slider(title="Telescope Temperature (K)", value = 270.0, start=90.0, end=400., step=10., callback_policy='mouseup') 
@@ -1377,7 +1387,7 @@ template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Ar
 comparison = Select(title="Show comparison spectrum?", value ="none", options=["none", "Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU', "False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth'])
 
 
-oo = column(children=[exptime, diameter, resolution, temperature, ground_based]) 
+oo = column(children=[exptime, diameter, resolution_UV, resolution, resolution_NIR, temperature, ground_based]) 
 pp = column(children=[template, comparison, distance, radius, semimajor, exozodi]) 
 qq = column(children=[instruction0, text_input, instruction1, format_button_group, instruction2, link_box])
 ii = column(children=[inner, outer,  dtmax])

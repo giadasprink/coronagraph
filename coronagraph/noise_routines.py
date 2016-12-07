@@ -542,8 +542,8 @@ def lambertPhaseFunction(alpha):
     alpha = alpha * np.pi / 180.
     return (np.sin(alpha) + (np.pi - alpha) * np.cos(alpha)) / np.pi
 
-@jit
-def construct_lam(lammin, lammax, Res):
+#@jit
+def construct_lam(lammin, lammax, Res, UV=False, NIR=False, lammin_uv = 0.2, lammin_vis = 0.4, lammin_nir = 1., Res_UV=50., Res_NIR = 50.):
     """
     Construct wavelength grid
 
@@ -563,8 +563,7 @@ def construct_lam(lammin, lammax, Res):
     dlam : float or array-like
         Spectral element width [um]
     """
-
-    # Set wavelength grid
+    # Set wavelength grid for whole thing
     lam  = lammin #in [um]
     Nlam = 1
     while (lam < lammax):
@@ -585,6 +584,64 @@ def construct_lam(lammin, lammax, Res):
     dlam[0] = dlam[1]
     dlam[Nlam-1] = dlam[Nlam-2]
 
+    # if want separate UV resolution
+    if UV:
+        print 'separate UV channel'
+        lam_uv  = lammin_uv #in [um]
+        Nlam = 1
+        while (lam_uv < lammin_vis):
+            lam_uv  = lam_uv + lam_uv/Res_UV
+            Nlam = Nlam +1
+        lam_uv    = np.zeros(Nlam)
+        lam_uv[0] = lammin_uv
+        for j in range(1,Nlam):
+            lam_uv[j] = lam_uv[j-1] + lam_uv[j-1]/Res_UV
+        Nlam = len(lam_uv)
+        dlam_uv = np.zeros(Nlam) #grid widths (um)
+
+        # Set wavelength widths
+        for j in range(1,Nlam-1):
+            dlam_uv[j] = 0.5*(lam_uv[j+1]+lam_uv[j]) - 0.5*(lam_uv[j-1]+lam_uv[j])
+
+        #Set edges to be same as neighbor
+        dlam_uv[0] = dlam_uv[1]
+        dlam_uv[Nlam-1] = dlam_uv[Nlam-2]
+        
+        #now put in main array
+        ok_uv = (lam_uv < lammin_vis)
+        ok_vis = (lam >= lammin_vis)
+        lam = np.concatenate((lam_uv[ok_uv], lam[ok_vis]))
+        dlam = np.concatenate((dlam_uv[ok_uv], dlam[ok_vis]))
+        
+    # if want separate NIR resolution
+    if NIR:
+        print 'separate NIR channel'
+        lam_nir = lammin_nir
+        Nlam = 1
+        while (lam_nir >= lammin_nir) & (lam_nir < lammax):
+            lam_nir  = lam_nir + lam_nir/Res_NIR
+            Nlam = Nlam +1
+        lam_nir    = np.zeros(Nlam)
+        lam_nir[0] = lammin_nir
+        for j in range(1,Nlam):
+            lam_nir[j] = lam_nir[j-1] + lam_nir[j-1]/Res_NIR
+        Nlam = len(lam_nir)
+        dlam_nir = np.zeros(Nlam) #grid widths (um)
+
+        # Set wavelength widths
+        for j in range(1,Nlam-1):
+            dlam_nir[j] = 0.5*(lam_nir[j+1]+lam_nir[j]) - 0.5*(lam_nir[j-1]+lam_nir[j])
+
+        #Set edges to be same as neighbor
+        dlam_nir[0] = dlam_nir[1]
+        dlam_nir[Nlam-1] = dlam_nir[Nlam-2]        
+
+        #now put in main array
+        ok_nir = (lam_nir > lammin_nir)
+        ok_vis = (lam <= lammin_nir)
+        lam = np.concatenate((lam[ok_vis], lam_nir[ok_nir]))
+        dlam = np.concatenate((dlam[ok_vis], dlam_nir[ok_nir]))
+        
     return lam, dlam
 
 @jit
