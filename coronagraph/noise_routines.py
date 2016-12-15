@@ -41,7 +41,10 @@ def Fstar(lam, Teff, Rs, d, AU=False):
     c2    = 1.4387769e-2     # h*c/k (m K)
     power   = c2/lam/Teff    # (unitless)
     Fs    = c1/( (lam**5.)*(np.exp(power)-1.) ) * 1.e-6
-    return Fs*(Rs*Rsun/d/ds)**2.
+    if d != 0: Fs_   =  Fs*(Rs*Rsun/d/ds)**2.
+    if d == 0: Fs_   =  Fs*(Rs*Rsun/ds)**2.
+    print "Fs_ = ", Fs_
+    return Fs_
 
 def Fplan(A, Phi, Fstar, Rp, d, AU=False):
     """
@@ -72,6 +75,34 @@ def Fplan(A, Phi, Fstar, Rp, d, AU=False):
     if AU:
         ds = 1.495979e11     # AU (m)
     return A*Phi*Fstar*(Rp*Re/d/ds)**2.
+
+def Fobj(Fo, Ro, d, AU=False):
+    """
+    Planetary flux function
+
+    Parameters
+    ----------
+    Fhr : Float array
+       Object flux [W/m**2/um]
+    Ro : Float
+       Object radius [Solar radii]
+    Rsun : float
+        Sun radius [Sun radii]
+    d : float
+        Distance to star [pc]
+    AU : bool, optional
+        Flag that indicates d is in AU
+
+    Returns
+    -------
+    Fobj : float or array-like
+        Obj flux [W/m**2/um]
+    """
+    Rsun  = 6.958e8          # solar radius (m)
+    ds    = 3.08567e16     # parsec (m)
+    if AU:
+        ds = 1.495979e11     # AU (m)
+    return Fo*(Ro*Rsun/d/ds)**2.
 
 def FpFs(A, Phi, Rp, r):
     """
@@ -125,6 +156,35 @@ def cplan(q, fpa, T, lam, dlam, Fplan, D):
     """
     hc  = 1.986446e-25 # h*c (kg*m**3/s**2)
     return np.pi*q*fpa*T*(lam*1.e-6/hc)*dlam*Fplan*(D/2.)**2.
+
+def cobj(q, fpa, T, lam, dlam, Fo, D):
+    """
+    Object photon count rate
+
+    Parameters
+    ----------
+    q : float or array-like
+        Quantum efficiency
+    fpa : float
+        Fraction of object light that falls within photometric aperture
+    T : float
+        Telescope and system throughput
+    lam : float or array-like
+        Wavelength [um]
+    dlam : float or array-like
+        Spectral element width [um]
+    Fo : float or array-like
+        Object flux [W/m**2/um]
+    D : float
+        Telescope diameter [m]
+
+    Returns
+    -------
+    cplan : float or array-like
+        Exoplanetary photon count rate [1/s]
+    """
+    hc  = 1.986446e-25 # h*c (kg*m**3/s**2)
+    return np.pi*q*fpa*T*(lam*1.e-6/hc)*dlam*Fo*(D/2.)**2.
 
 def czodi(q, X, T, lam, dlam, D, Mzv, SUN=False, CIRC=False):
     """
