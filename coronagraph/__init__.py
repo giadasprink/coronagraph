@@ -14,5 +14,6 @@ if not _ASTROPY_SETUP_:
     import filters
     from .convolve_spec import *
     from .count_rates import *
+    from .count_rates_onirs import *
     from .count_rates_wrapper import *
     import noise_routines
