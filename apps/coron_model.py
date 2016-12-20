@@ -1275,17 +1275,17 @@ def update_data(attrname, old, new):
     global snr_ymax_
     global snr_ymin_
 
-    ii = np.where(lam < 2.5) #only want where reflected light, not thermal
-    iii = np.where(lamC < 2.5)  #only want where reflected light, not thermal
+    #ii = np.where(lam < 3.) #only want where reflected light, not thermal
+    #iii = np.where(lamC < 3.)  #only want where reflected light, not thermal
    # pdb.set_trace()
-    Cratio_ok = Cratio[ii]
-    CratioC_ok = CratioC[iii]
-    Cratio_ok = Cratio_ok[~np.isnan(Cratio_ok)]
-    CratioC_ok = CratioC_ok[~np.isnan(CratioC_ok)]
+    #Cratio_ok = Cratio[ii]
+    #CratioC_ok = CratioC[iii]
+    Cratio_ok = Cratio[~np.isnan(Cratio)]
+    CratioC_ok = CratioC[~np.isnan(CratioC)]
     print 'snr_ymax_',  np.max([np.max(Cratio_ok)*1e9, np.max(CratioC_ok)*1e9])
     print 'snr_ymin_',  np.min([np.min(Cratio_ok)*1e9, np.min(CratioC_ok)*1e9])
     snr_ymax_ = np.max([np.max(Cratio_ok)*1e9, np.max(CratioC_ok)*1e9])
-    snr_ymin_ = np.min([np.min(CratioC_ok)*1e9, np.min(CratioC_ok)*1e9])
+    snr_ymin_ = np.min([np.min(Cratio_ok)*1e9, np.min(CratioC_ok)*1e9])
     snr_plot.y_range.start = snr_ymin_*0.9
 
     exp_plot.yaxis.axis_label='Integration time for SNR = '+str(want_snr.value)+' [hours]' 

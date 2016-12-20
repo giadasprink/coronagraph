@@ -382,7 +382,7 @@ diameter  = Slider(title="Mirror Diameter (meters)", value = 10.0, start=0.5, en
 diameter.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-resolution  = Slider(title="Log Telescope  Resolution (R)", value = 2., start=0., end=3.5, step=0.1, callback_policy='mouseup') 
+resolution  = Slider(title="Log Telescope  Resolution (R)", value = 2., start=0.3, end=3.5, step=0.2, callback_policy='mouseup') 
 resolution.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
