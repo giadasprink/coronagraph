@@ -46,7 +46,7 @@ relpath = os.path.join(os.path.dirname(__file__), planetdir)
 Dt = 24.0 # - SLIDER
 
 # Telescopes params
-diam = 10. # mirror diameter - SLIDER
+diam = 12.2 # mirror diameter - SLIDER
 Res = 150. # vis resolution - SLIDER
 Res_UV = 20. # UV resolution - SLIDER
 Res_NIR = 100. #NIR resolution - SLIDER
@@ -127,8 +127,9 @@ spec = Cratio + np.random.randn(len(Cratio))*sig
 #update params
 lastlam = lam
 lastCratio = Cratio
-snr_ymax = np.max(Cratio)*1e9
-yrange=[snr_ymax]
+snr_ymax_ = np.max(Cratio)*1e9
+yrange=[snr_ymax_]
+snr_ymin_ = np.min(Cratio)*1e9
 lamC = lastlam * 0.
 CratioC = lastCratio * 0.
 global lamC
@@ -149,7 +150,7 @@ textlabel = ColumnDataSource(data=dict(label = planet_label))
 #plots spectrum and exposure time
 snr_plot = Figure(plot_height=500, plot_width=750, 
                   tools="crosshair,pan,reset,resize,save,box_zoom,wheel_zoom,hover",
-                  toolbar_location='right', x_range=[0.2, 3.0], y_range=[-0.2, 0.4])
+                  toolbar_location='right', x_range=[0.2, 3.0], y_range=[0, 0.2])
 
 exp_plot = Figure(plot_height=500, plot_width=750, 
                   tools="crosshair,pan,reset,resize,save,box_zoom,wheel_zoom,hover",
@@ -177,12 +178,12 @@ exp_plot.line('lam','DtSNR',source=expcompare,line_width=2.0, color="navy", alph
 exp_plot.line('lam','DtSNR',source=expplanet,line_width=2.0, color="darkgreen", alpha=0.7)
 
 #text on plot
-glyph = Text(x=0.25, y=-0.19, text="label", text_font_size='9pt', text_font_style='bold', text_color='blue')
+glyph = Text(x=0.25, y=snr_ymin_*0.95, text="label", text_font_size='9pt', text_font_style='bold', text_color='blue')
 #attempting to outline the text here for ease of visibility... 
-glyph2 = Text(x=0.245, y=-0.19, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
-glyph3 = Text(x=0.25, y=-0.195, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
-glyph4 = Text(x=0.25, y=-0.845, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
-glyph5 = Text(x=0.255, y=-0.19, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
+glyph2 = Text(x=0.245, y=snr_ymin_*0.95, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
+glyph3 = Text(x=0.25, y=snr_ymin_*0.935, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
+glyph4 = Text(x=0.25, y=snr_ymin_*0.965, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
+glyph5 = Text(x=0.255, y=snr_ymin_*0.95, text="label", text_font_size='9pt', text_font_style='bold', text_color='white')
 snr_plot.add_glyph(textlabel, glyph2)
 snr_plot.add_glyph(textlabel, glyph3)
 snr_plot.add_glyph(textlabel, glyph4)
@@ -960,7 +961,7 @@ def update_data(attrname, old, new):
           Ahr_c = model[:,1]
           lamhr_c = lamhr_c / 1000. #convert to microns
           Ahr_c = Ahr_c * 0.67 #convert to geometric albedo
-          semimajor_c = 1.0
+          semimajor_c = 2.0
           radius_c = 3.86
           Teff_c  = 5780.   # Sun-like Teff (K)
           Rs_c    = 1.      # star radius in solar radii
@@ -990,7 +991,7 @@ def update_data(attrname, old, new):
           Ahr_c = model[:,1]
           lamhr_c = lamhr_c / 1000. #convert to microns
           Ahr_c = Ahr_c * 0.67 #convert to geometric albedo
-          semimajor_c = 2.0
+          semimajor_c = 1.0
           radius_c = 3.86
           Teff_c  = 5780.   # Sun-like Teff (K)
           Rs_c    = 1.      # star radius in solar radii
@@ -1274,18 +1275,18 @@ def update_data(attrname, old, new):
     global snr_ymax_
     global snr_ymin_
 
-    ii = np.where(lam < 2.5) #only want where reflected light, not thermal
-    iii = np.where(lamC < 2.5)  #only want where reflected light, not thermal
+    #ii = np.where(lam < 3.) #only want where reflected light, not thermal
+    #iii = np.where(lamC < 3.)  #only want where reflected light, not thermal
    # pdb.set_trace()
-    Cratio_ok = Cratio[ii]
-    CratioC_ok = CratioC[iii]
-    Cratio_ok = Cratio_ok[~np.isnan(Cratio_ok)]
-    CratioC_ok = CratioC_ok[~np.isnan(CratioC_ok)]
+    #Cratio_ok = Cratio[ii]
+    #CratioC_ok = CratioC[iii]
+    Cratio_ok = Cratio[~np.isnan(Cratio)]
+    CratioC_ok = CratioC[~np.isnan(CratioC)]
     print 'snr_ymax_',  np.max([np.max(Cratio_ok)*1e9, np.max(CratioC_ok)*1e9])
     print 'snr_ymin_',  np.min([np.min(Cratio_ok)*1e9, np.min(CratioC_ok)*1e9])
-    snr_ymax_ = np.max([np.max(Cratio_ok)*1e9*1.5, np.max(CratioC_ok)*1e9*1.5])
-    snr_ymin_ = np.min([np.min(CratioC_ok)*1e9, np.min(CratioC_ok)*1e9])
-    snr_plot.y_range.start = -0.2
+    snr_ymax_ = np.max([np.max(Cratio_ok)*1e9, np.max(CratioC_ok)*1e9])
+    snr_ymin_ = np.min([np.min(Cratio_ok)*1e9, np.min(CratioC_ok)*1e9])
+    snr_plot.y_range.start = snr_ymin_*0.9
 
     exp_plot.yaxis.axis_label='Integration time for SNR = '+str(want_snr.value)+' [hours]' 
 
@@ -1302,8 +1303,8 @@ def update_data(attrname, old, new):
        if comparison.value == 'none' or comparison.value == 'Early Mars' or comparison.value == 'Mars':
           snr_plot.y_range.end = snr_ymax_ + 2.*snr_ymax_
     else:
-       snr_plot.y_range.end = snr_ymax_ + 0.2*snr_ymax_
-
+       snr_plot.y_range.end = snr_ymax_ *1.1
+      
 
     
 
@@ -1334,7 +1335,7 @@ exozodi  = Slider(title="Number of Exozodi", value = 3.0, start=1.0, end=10., st
 exozodi.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-diameter  = Slider(title="Mirror Diameter (meters)", value = 10.0, start=0.5, end=50., step=0.5, callback_policy='mouseup') 
+diameter  = Slider(title="Mirror Diameter (meters)", value = 12.2, start=0.5, end=50., step=0.5, callback_policy='mouseup') 
 diameter.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
