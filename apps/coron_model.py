@@ -1387,18 +1387,46 @@ template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Ar
 #select menu for comparison spectrum
 comparison = Select(title="Show comparison spectrum?", value ="none", options=["none", "Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU', "False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth'])
 
+#info text
+info_text = Div(text="""
 
-oo = column(children=[exptime, diameter, resolution_UV, resolution, resolution_NIR, temperature, ground_based]) 
-pp = column(children=[template, comparison, distance, radius, semimajor, exozodi]) 
+The "Planet" tab includes options to simulate several types of planetary spectra that can be selected from the "Planet Spectrum" dropdown menu. The telescope-planetary system separation distance can be set using the "Distance" slider. When a target is selected, the "Planet Radius" and "Semi-major axis of orbit" sliders will default to the correct positions for the selected planet. Note that while it is possible to adjust these parameters for each target, changing them can result in spectra representing non-physical targets. Also included under the "Planet" tab is a slider for scaling exozodiacal dust.
+<br><br>
+The "Observation" tab controls telescope integration time per coronagraphic bandpass, mirror diameter, spectrograph resolution for UV-VIS-NIR channels, telescope temperature, and the option to turn on a ground-based simulator.
+<br><br>
+The "Instrumentation" tab controls the instrument inner working angle (IWA), outer working angle (OWA), both in terms of lambda/D, and the maximum time for a single exposure.
+<br><Br>
+The "Exposure Time Calculator" tab contains a slider to set a desired signal-to-noise ratio. In the "Exposure Time" plot tab, the simulator will display the integration time required to obtain this signal-to-noise ratio for the current telescope and instrumentation setup. Note that this tab applies only to the Exposure Time plot, not to the Spectrum plot.
+<br><br>
+In the "Download" tab, spectral data can be downloaded in either .txt or .fits format.
+<br><br>
+The underlying model is derived from the python-based version of Tyler Robinson's coronagraphic spectrum and noise model (Robinson et al. 2016). Python by Jacob Lustig-Yaeger. Bokeh rendering by Jason Tumlinson and Giada Arney.
+<br><br>
+For full details, please see the readme file <a href="coron_readme.txt">here</a>.
+
+""",
+width=250, height=100)
+
+planet_text = Div(text="""Select parameters for simulated planet.""", width=250, height=15)
+obs_text = Div(text="""Choose telescope integration time per coronagraphic bandpass, mirror diameter, spectrographic resolution for UV-VIS-NIR channels, telescope temperature, and whether to turn on a ground-based simulator.""", width=250, height=100)
+ins_text = Div(text="""Choose the scaling factor for the inner working angle (IWA), the outer working angle (OWA), and the maximum length of time for a single exposure.""", width=250, height=70)
+
+
+#
+
+oo = column(children=[obs_text,exptime, diameter, resolution_UV, resolution, resolution_NIR, temperature, ground_based]) 
+pp = column(children=[planet_text, template, comparison, distance, radius, semimajor, exozodi]) 
 qq = column(children=[instruction0, text_input, instruction1, format_button_group, instruction2, link_box])
-ii = column(children=[inner, outer,  dtmax])
+ii = column(children=[ins_text, inner, outer,  dtmax])
 ee = column(children=[want_snr])
+info = column(children=[info_text])
 
 observation_tab = Panel(child=oo, title='Observation')
 planet_tab = Panel(child=pp, title='Planet')
 instrument_tab = Panel(child=ii, title='Instrumentation')
 download_tab = Panel(child=qq, title='Download')
 time_tab = Panel(child=ee, title='Exposure Time Calculator')
+info_tab = Panel(child=info, title='Info')
 
 for w in [text_input]: 
     w.on_change('value', change_filename)
@@ -1414,6 +1442,6 @@ for gg in [ground_based]:
     gg.on_change('value', update_data)
 
 
-inputs = Tabs(tabs=[ planet_tab, observation_tab, instrument_tab, time_tab, download_tab ])
+inputs = Tabs(tabs=[ planet_tab, observation_tab, instrument_tab, time_tab, download_tab, info_tab ])
 
 curdoc().add_root(row(inputs, ptabs)) 
