@@ -603,7 +603,7 @@ def lambertPhaseFunction(alpha):
     return (np.sin(alpha) + (np.pi - alpha) * np.cos(alpha)) / np.pi
 
 #@jit
-def construct_lam(lammin, lammax, Res, UV=False, NIR=False, lammin_uv = 0.2, lammin_vis = 0.4, lammin_nir = 1., Res_UV=50., Res_NIR = 50.):
+def construct_lam(lammin, lammax, Res, UV=False, NIR=False, lammin_uv = 0.2, lammin_vis = 0.4, lammin_nir = 0.85, Res_UV=50., Res_NIR = 50.):
     """
     Construct wavelength grid
 
@@ -740,7 +740,7 @@ def set_quantum_efficiency(lam, qe, NIR=False, qe_nir=0.9):
 
     return q
 
-def set_dark_current(lam, De, lammax, Tdet, NIR=False, De_nir=1e-3):
+def set_dark_current(lam, De_UV, De_VIS, De_NIR, lammax, Tdet, NIR=False, De_nir=1e-3, lammin_uv=0.2, lammin_vis=0.4, lammin_nir=0.85):
     """
     Set dark current grid as a function of wavelength
 
@@ -764,8 +764,19 @@ def set_dark_current(lam, De, lammax, Tdet, NIR=False, De_nir=1e-3):
     De : array-like
         Dark current as a function of wavelength
     """
-    De = np.zeros(len(lam)) + De
+    De = np.zeros(len(lam))
+#    import pdb; pdb.set_trace()
+    iUV = (lam < lammin_vis)
+    iVIS = (lam >= lammin_vis) & (lam <= lammin_nir)
+    iNIR = (lam > lammin_nir)
 
+    De[iUV] = De_UV
+    De[iVIS] = De_VIS
+    De[iNIR] = De_NIR
+    print De_UV, De_VIS, De_NIR
+    print 'De is'
+    print De
+    
   #  if NIR:
    #     iNIR  = (lam > 1.0)
         # Set dark current based on NIR detector properties
@@ -779,7 +790,7 @@ def set_dark_current(lam, De, lammax, Tdet, NIR=False, De_nir=1e-3):
 
     return De
 
-def set_read_noise(lam, Re, NIR=False, Re_nir=2.):
+def set_read_noise(lam,  Re_UV, Re_VIS, Re_NIR, NIR=False, Re_nir=2., lammin_uv=0.2, lammin_vis=0.4, lammin_nir=0.85):
     """
     Set read noise grid as a function of wavelength
 
@@ -799,16 +810,24 @@ def set_read_noise(lam, Re, NIR=False, Re_nir=2.):
     Re : array-like
         Read noise as a function of wavelength
     """
-    Re = np.zeros(len(lam)) + Re
+    Re = np.zeros(len(lam)) 
+    
+    iUV = (lam < lammin_vis)
+    iVIS = (lam >= lammin_vis) & (lam <= lammin_nir)
+    iNIR = (lam > lammin_nir)
 
-    if NIR:
-        iNIR  = (lam > 1.0)
-        Re[iNIR] = Re_nir
+    Re[iUV] = Re_UV
+    Re[iVIS] = Re_VIS
+    Re[iNIR] = Re_NIR
+
+    #if NIR:
+    #    iNIR  = (lam > 1.0)
+    #    Re[iNIR] = Re_nir
 
     return Re
 
 def set_lenslet(lam, lammin, diam,
-                NIR=False, UV=False, lammin_nir=1.0, lammin_uv = 0.2):
+                NIR=False, UV=False, lammin_vis = 0.4, lammin_nir=0.85, lammin_uv = 0.2):
     """
     Set the angular size of the lenslet
 
@@ -833,19 +852,19 @@ def set_lenslet(lam, lammin, diam,
     Nlam = len(lam)
     theta = np.zeros(Nlam)
     if UV:
-        lammin_vis = 0.4
+        lammin_vis = lammin_vis
     else:
         lammin_vis = lammin
     theta[0:] = lammin_vis/1.e6/diam/2.*(180/np.pi*3600.) # assumes sampled at ~lambda/2D (arcsec)
 
     if NIR:
         
-        iNIR  = (lam > 1.0)
+        iNIR  = (lam > lammin_nir)
         # If there are wavelength bins longer than 1um:
         theta[iNIR] = lammin_nir/1e6/diam/2.*(180/np.pi*3600.)
     if UV:
       #  theta = np.zeros(Nlam)
-        iUV  = (lam > 0.2) & (lam <= 0.4 )
+        iUV  = (lam > lammin_uv) & (lam <= lammin_vis )
         # if there are wavelength bins shorter than 0.4um:
         theta[iUV] = lammin_uv/1e6/diam/2.*(180/np.pi*3600.)
         

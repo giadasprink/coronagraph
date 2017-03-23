@@ -29,16 +29,24 @@ def count_rates(Ahr, lamhr, solhr,
                 Tsys   = 150.0,
                 Tdet   = 50.0,
                 emis   = 0.09,
-                De     = 1e-4,
+                De_UV  = 1e-4, #2e-3 is the LUVOIR NIR dark count rate but what is vis and uv?
+                De_VIS = 1e-4, #2e-3 is the LUVOIR NIR dark count rate but what is vis and uv?
+                De_NIR = 2e-3, #2e-3 is the LUVOIR NIR dark count rate but what is vis and uv? 
                 DNHpix = 3.0,
-                Re     = 0.1,
+                Re_UV   = 0.0, #Vis & UV (NIR will be different but not known yet)
+                Re_VIS = 0.0,
+                Re_NIR = 0.01, #was told 10 e- per pixel per 100 MHz 
                 Dtmax  = 1.0,
                 X      = 1.5,
                 qe     = 0.9,
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22
                 Res_NIR = -1, 
-                Res_UV = -1, 
+                Res_UV = -1,
+                lammin_uv = 0.2,
+                lammin_vis = 0.4,
+                lammin_nir = 0.85,
+                ntherm = 1, 
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
                 SILENT = False, NIR = True, UV=True, THERMAL = True,
                 GROUND = False):
@@ -193,7 +201,7 @@ def count_rates(Ahr, lamhr, solhr,
 
     # Set wavelength grid
     if COMPUTE_LAM:
-        lam, dlam = construct_lam(lammin, lammax, Res, UV=UV, NIR=NIR, Res_UV = Res_UV, Res_NIR = Res_NIR)
+        lam, dlam = construct_lam(lammin, lammax, Res, UV=UV, NIR=NIR, Res_UV = Res_UV, Res_NIR = Res_NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
     elif IMAGE:
         pass
     else:
@@ -205,11 +213,12 @@ def count_rates(Ahr, lamhr, solhr,
     q = set_quantum_efficiency(lam, qe, NIR=NIR)
 
     # Set Dark current and Read noise
-    De = set_dark_current(lam, De, lammax, Tdet, NIR=NIR)
-    Re = set_read_noise(lam, Re, NIR=NIR)
+    print De_UV, De_VIS, De_NIR
+    De = set_dark_current(lam, De_UV, De_VIS, De_NIR, lammax, Tdet, NIR=NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
+    Re = set_read_noise(lam, Re_UV, Re_VIS, Re_NIR, NIR=NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
 
     # Set Angular size of lenslet
-    theta = set_lenslet(lam, lammin, diam, NIR=NIR, UV=UV)
+    theta = set_lenslet(lam, lammin, diam, NIR=NIR, UV=UV, lammin_vis = lammin_vis, lammin_nir=lammin_nir, lammin_uv=lammin_uv)
 
     # Set throughput
     sep  = r/d*np.sin(alpha*np.pi/180.)*np.pi/180./3600. # separation in radians
@@ -247,7 +256,7 @@ def count_rates(Ahr, lamhr, solhr,
     cD     =  cdark(De, X, lam, diam, theta, DNHpix, IMAGE=IMAGE)            # dark current count rate
     cR     =  cread(Re, X, lam, diam, theta, DNHpix, Dtmax, IMAGE=IMAGE)     # readnoise count rate
     if THERMAL:
-        cth    =  ctherm(q, X, lam, dlam, diam, Tsys, emis)                      # internal thermal count rate
+        cth    =  ntherm*ctherm(q, X, lam, dlam, diam, Tsys, emis)                      # internal thermal count rate
     else:
         cth = np.zeros_like(cp)
     # Add earth thermal photons if GROUND
