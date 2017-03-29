@@ -22,6 +22,7 @@ def count_rates(Ahr, lamhr, solhr,
                 lammax = 2.5,
                 Res    = 70.0,
                 diam   = 10.0,
+                collect_area = -1,
                 Tput   = 0.20,
                 C      = 1e-10,
                 IWA    = 3.0,
@@ -29,11 +30,11 @@ def count_rates(Ahr, lamhr, solhr,
                 Tsys   = 150.0,
                 Tdet   = 50.0,
                 emis   = 0.09,
-                De_UV  = 1e-4, #2e-3 is the LUVOIR NIR dark count rate but what is vis and uv?
-                De_VIS = 1e-4, #2e-3 is the LUVOIR NIR dark count rate but what is vis and uv?
-                De_NIR = 2e-3, #2e-3 is the LUVOIR NIR dark count rate but what is vis and uv? 
+                De_UV  = 3e-5, #BOL dark current 
+                De_VIS = 3e-5, #BOL dark current
+                De_NIR = 2e-3, #specs for teledyne detector 
                 DNHpix = 3.0,
-                Re_UV   = 0.0, #Vis & UV (NIR will be different but not known yet)
+                Re_UV  = 0.0, #Vis & UV (NIR will be different but not known yet)
                 Re_VIS = 0.0,
                 Re_NIR = 0.01, #was told 10 e- per pixel per 100 MHz 
                 Dtmax  = 1.0,
@@ -90,6 +91,8 @@ def count_rates(Ahr, lamhr, solhr,
         Instrument spectral resolution (lambda / delta_lambda)
     diam : float, optional
         Telescope diameter [m]
+    collect area : float, optional
+        If user sets this, they can specify a collecting area different from the diameter [m^2]
     Tput : float, optional
         Telescope and instrument throughput
     C : float, optional
@@ -198,6 +201,12 @@ def count_rates(Ahr, lamhr, solhr,
     # fraction of planetary signal in Airy pattern
     fpa = f_airy(X)
 
+    
+    #check if user has specified a different collecting area
+    if collect_area == -1:
+        diam2 = diam
+    if collect_area != -1:
+        diam2 = np.sqrt(collect_area/3.14159)*2.
 
     # Set wavelength grid
     if COMPUTE_LAM:
@@ -248,15 +257,15 @@ def count_rates(Ahr, lamhr, solhr,
     Cratio = FpFs(A, Phi, Rp, r)
 
     ##### Compute count rates #####
-    cp     =  cplan(q, fpa, T, lam, dlam, Fp, diam)                            # planet count rate
-    cz     =  czodi(q, X, T, lam, dlam, diam, MzV)                           # solar system zodi count rate
-    cez    =  cezodi(q, X, T, lam, dlam, diam, r, \
+    cp     =  cplan(q, fpa, T, lam, dlam, Fp, diam2)                            # planet count rate
+    cz     =  czodi(q, X, T, lam, dlam, diam2, MzV)                           # solar system zodi count rate
+    cez    =  cezodi(q, X, T, lam, dlam, diam2, r, \
         Fstar(lam,Teff,Rs,1.,AU=True), Nez, MezV)                            # exo-zodi count rate
-    csp    =  cspeck(q, T, C, lam, dlam, Fstar(lam,Teff,Rs,d), diam)         # speckle count rate
-    cD     =  cdark(De, X, lam, diam, theta, DNHpix, IMAGE=IMAGE)            # dark current count rate
-    cR     =  cread(Re, X, lam, diam, theta, DNHpix, Dtmax, IMAGE=IMAGE)     # readnoise count rate
+    csp    =  cspeck(q, T, C, lam, dlam, Fstar(lam,Teff,Rs,d), diam2)         # speckle count rate
+    cD     =  cdark(De, X, lam, diam2, theta, DNHpix, IMAGE=IMAGE)            # dark current count rate
+    cR     =  cread(Re, X, lam, diam2, theta, DNHpix, Dtmax, IMAGE=IMAGE)     # readnoise count rate
     if THERMAL:
-        cth    =  ntherm*ctherm(q, X, lam, dlam, diam, Tsys, emis)                      # internal thermal count rate
+        cth    =  ntherm*ctherm(q, X, lam, dlam, diam2, Tsys, emis)                      # internal thermal count rate
     else:
         cth = np.zeros_like(cp)
     # Add earth thermal photons if GROUND
@@ -264,7 +273,7 @@ def count_rates(Ahr, lamhr, solhr,
         # Compute ground intensity due to sky background
         Itherm  = get_thermal_ground_intensity(lam, dlam, convolution_function)
         # Compute Earth thermal photon count rate
-        cthe = ctherm_earth(q, X, lam, dlam, diam, Itherm)
+        cthe = ctherm_earth(q, X, lam, dlam, diam2, Itherm)
         # Add earth thermal photon counts to telescope thermal counts
         cth = cth + cthe
         if False:

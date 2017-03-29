@@ -46,7 +46,7 @@ relpath = os.path.join(os.path.dirname(__file__), planetdir)
 Dt = 24.0 # - SLIDER
 
 # Telescopes params
-diam = 12.2 # mirror diameter - SLIDER
+diam = 12.7 # mirror diameter - SLIDER
 Res = 150. # vis resolution - SLIDER
 Res_UV = 20. # UV resolution - SLIDER
 Res_NIR = 100. #NIR resolution - SLIDER
@@ -403,6 +403,22 @@ def update_data(attrname, old, new):
     global radius_c
     global semimajor_c
     global lastcomparison
+
+    #if user has selected specific telscope, update parameters
+    #note collect_area is currently a hidden variable...
+    collect_area = -1 #set if user has not specified a given architecture
+    if observatory.value == 'LUVOIR 15 m':
+       diameter.value = 12.7
+       collect_area = 137.
+       ntherm.value = 13.
+       temperature.value = 270.
+       resolution_UV.value = 10.
+    if observatory.value == 'LUVOIR 9 m':
+       diameter.value = 7.6
+       collect_area = 49.7 #this is wrong. update when know right value.
+       ntherm.value = 13.
+       temperature.value = 270.
+       resolution_UV.value = 10.
     
 # Read-in new spectrum file only if changed
     if template.value != lasttemplate:
@@ -880,7 +896,7 @@ def update_data(attrname, old, new):
     
     # Run coronagraph 
     lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
+        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
 
 
     # Calculate background photon count rates
@@ -1412,10 +1428,10 @@ def update_data(attrname, old, new):
          distance_c
       except NameError:
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
+       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
       else:    
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR,Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
+       cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR,Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
 
 
       
@@ -1475,7 +1491,7 @@ def update_data(attrname, old, new):
 
 source = ColumnDataSource(data=dict(value=[]))
 source.on_change('data', update_data)
-exptime  = Slider(title="Integration Time (hours)", value=24., start=1., end=1000.0, step=1.0, callback_policy='mouseup')
+exptime  = Slider(title="Integration time per bandpass (hours)", value=24., start=0.1, end=1000.0, step=0.1, callback_policy='mouseup')
 exptime.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
@@ -1495,19 +1511,19 @@ exozodi  = Slider(title="Number of Exozodi", value = 3.0, start=1.0, end=10., st
 exozodi.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-diameter  = Slider(title="Mirror Diameter (meters)", value = 12.2, start=0.5, end=50., step=0.5, callback_policy='mouseup') 
+diameter  = Slider(title="Mirror Diameter (meters)", value = 12.2, start=0.5, end=50., step=0.1, callback_policy='mouseup') 
 diameter.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-resolution  = Slider(title="Telescope Visible Resolution (R)", value = 150.0, start=10.0, end=300., step=5., callback_policy='mouseup') 
+resolution  = Slider(title="Telescope Visible Resolution (R)", value = 150.0, start=5.0, end=300., step=1., callback_policy='mouseup') 
 resolution.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-resolution_UV  = Slider(title="Telescope UV Resolution (R)", value = 20.0, start=10.0, end=300., step=5., callback_policy='mouseup') 
+resolution_UV  = Slider(title="Telescope UV Resolution (R)", value = 20.0, start=5.0, end=300., step=1., callback_policy='mouseup') 
 resolution_UV.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-resolution_NIR  = Slider(title="Telescope NIR Resolution (R)", value = 100.0, start=10.0, end=1000., step=5., callback_policy='mouseup') 
+resolution_NIR  = Slider(title="Telescope NIR Resolution (R)", value = 100.0, start=5.0, end=1000., step=1., callback_policy='mouseup') 
 resolution_NIR.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
@@ -1549,6 +1565,9 @@ ground_based = Select(title="Simulate ground-based observation?", value="No", op
 #bandpass choice
 bandpass = Select(title="Show LUVOIR bandpasses", value="No", options=["No",  "Yes"])
 
+#observatory choice
+observatory = Select(title="Simulate specific observatory?", value="No", options=["No",  "LUVOIR 15 m", 'LUVOIR 9 m'])
+
 #select menu for planet
 template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU',"False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth' ])
 #select menu for comparison spectrum
@@ -1559,9 +1578,11 @@ info_text = Div(text="""
 
 The "Planet" tab includes options to simulate several types of planetary spectra that can be selected from the "Planet Spectrum" dropdown menu. The telescope-planetary system separation distance can be set using the "Distance" slider. When a target is selected, the "Planet Radius" and "Semi-major axis of orbit" sliders will default to the correct positions for the selected planet. Note that while it is possible to adjust these parameters for each target, changing them can result in spectra representing non-physical targets. Also included under the "Planet" tab is a slider for scaling exozodiacal dust.
 <br><br>
-The "Observation" tab controls telescope integration time per coronagraphic bandpass, mirror diameter, spectrograph resolution for UV-VIS-NIR channels, telescope temperature, and the option to turn on a ground-based simulator.
+The "Observation" tab controls telescope integration time per coronagraphic bandpass, maximum single exposure time, and the ability to turn on a ground-based simulator that includes thermal radiation from the sky and Earth's atmospheric transmission.
 <br><br>
-The "Instrumentation" tab controls the instrument inner working angle (IWA), outer working angle (OWA), both in terms of lambda/D, and the maximum time for a single exposure.
+The "Telescope" tab controls whether to simulate specific observatory architecture,  mirror diameter,  telescope temperature, the number of thermal surfaces, and whether to show the currently considered LUVOIR bandpasses.
+<br><Br>
+The "Instrumentation" tab controls the instrument inner working angle (IWA), outer working angle (OWA), both in terms of lambda/D, and the spectrograph resolution for UV-VIS-NIR channels.
 <br><Br>
 The "Exposure Time Calculator" tab contains a slider to set a desired signal-to-noise ratio. In the "Exposure Time" plot tab, the simulator will display the integration time required to obtain this signal-to-noise ratio for the current telescope and instrumentation setup. Note that this tab applies only to the Exposure Time plot, not to the Spectrum plot.
 <br><br>
@@ -1572,24 +1593,27 @@ The underlying model is derived from the python-based version of Tyler Robinson'
 For full details, please see the readme file <a href="coron_readme.txt">here</a>.
 
 """,
-width=250, height=100)
+width=250, height=120)
 
 planet_text = Div(text="""Select parameters for simulated planet.""", width=250, height=15)
-obs_text = Div(text="""Choose telescope integration time per coronagraphic bandpass, mirror diameter, spectrographic resolution for UV-VIS-NIR channels, telescope temperature, and whether to turn on a ground-based simulator.""", width=250, height=100)
-ins_text = Div(text="""Choose the scaling factor for the inner working angle (IWA), the outer working angle (OWA), and the maximum length of time for a single exposure.""", width=250, height=70)
+obs_text = Div(text="""Choose telescope integration time per coronagraphic bandpass, the maximum length of time for a single exposure,  and whether to turn on a ground-based simulator.""", width=250, height=100)
+tel_text = Div(text="""Choose whether to use a specified telescope architecture, mirror diameter, telescope temperature, number of thermal surfaces, and whether to show the currently considered LUVOIR bandpasses.""", width = 250, height = 90)
+ins_text = Div(text="""Choose the scaling factor for the inner working angle (IWA), the outer working angle (OWA), spectrographic resolution for UV-VIS-NIR channels""", width=250, height=70)
 
 
 #
 
-oo = column(children=[obs_text,exptime, diameter, resolution_UV, resolution, resolution_NIR, temperature, ground_based]) 
+oo = column(children=[obs_text,exptime,dtmax, ground_based]) 
 pp = column(children=[planet_text, template, comparison, distance, radius, semimajor, exozodi]) 
 qq = column(children=[instruction0, text_input, instruction1, format_button_group, instruction2, link_box])
-ii = column(children=[ins_text, inner, outer,  dtmax, ntherm, bandpass])
+ii = column(children=[ins_text, inner, outer,  resolution_UV, resolution, resolution_NIR])
+tt = column(children=[tel_text, observatory,diameter,temperature, ntherm, bandpass])
 ee = column(children=[want_snr])
 info = column(children=[info_text])
 
 observation_tab = Panel(child=oo, title='Observation')
 planet_tab = Panel(child=pp, title='Planet')
+telescope_tab = Panel(child=tt, title='Telescope')
 instrument_tab = Panel(child=ii, title='Instrumentation')
 download_tab = Panel(child=qq, title='Download')
 time_tab = Panel(child=ee, title='Exposure Time Calculator')
@@ -1611,6 +1635,9 @@ for gg in [ground_based]:
 for bb in [bandpass]: 
     bb.on_change('value', update_data)
 
-inputs = Tabs(tabs=[ planet_tab, observation_tab, instrument_tab, time_tab, download_tab, info_tab ])
+for bb in [observatory]:
+    bb.on_change('value', update_data)
+
+inputs = Tabs(tabs=[ planet_tab, observation_tab, telescope_tab, instrument_tab, time_tab, download_tab, info_tab ])
 
 curdoc().add_root(row(inputs, ptabs)) 
