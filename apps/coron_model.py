@@ -88,6 +88,7 @@ global comparison
 global Teff
 global Ts
 global stargalaxy
+global spec
 stargalaxy = 'false'
 
 ################################
@@ -132,8 +133,7 @@ Rs_ = Rs
 lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
     cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, Res_UV = Res_UV, Res_NIR = Res_NIR, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr)
 #arg
-lam_1, dlam_1, A_1, q_1, Cratio_1, cp_1, csp_1, cz_1, cez_1, cD_1, cR_1, cth_1, DtSNR_1 = \
-    cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, Res_UV = Res_UV, Res_NIR = Res_NIR, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr, ntherm=10)
+
 
 
 # Calculate background photon count rates
@@ -172,7 +172,7 @@ x_nirwidth = [0,0,0,0,0,0,0,0]
 
 #data
 planet = ColumnDataSource(data=dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts, planetrate=cp, czrate=cz, cezrate=cez, csprate=csp, cDrate=cD, cRrate=cR, ctherm=cth, castro=cp+cz+cez+csp, ctotal=cp+cz+cez+csp+cD+cR+cth))
-expplanet = ColumnDataSource(data=dict(lam=lam[np.isfinite(DtSNR)], DtSNR=DtSNR[np.isfinite(DtSNR)], DtSNR_ratio=DtSNR_1/DtSNR)) 
+expplanet = ColumnDataSource(data=dict(lam=lam[np.isfinite(DtSNR)], DtSNR=DtSNR[np.isfinite(DtSNR)])) 
 plotyrange = ColumnDataSource(data = dict(yrange=yrange))
 compare = ColumnDataSource(data=dict(lam=lamC, cratio=Cratio*1e9)) 
 expcompare = ColumnDataSource(data=dict(lam=lam[np.isfinite(DtSNR)], DtSNR=DtSNR[np.isfinite(DtSNR)]*(-1000000))) #to make it not show up
@@ -408,6 +408,7 @@ def update_data(attrname, old, new):
     global radius_c
     global semimajor_c
     global lastcomparison
+    stargalaxy = 'false'
 
     #if user has selected specific telscope, update parameters
     #note collect_area is currently a hidden variable...
@@ -901,7 +902,7 @@ def update_data(attrname, old, new):
     
     # Run coronagraph 
     lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
+        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain=gain.value)
 
 
     # Calculate background photon count rates
@@ -959,12 +960,20 @@ def update_data(attrname, old, new):
        print 'yes bandpasses'
       # print x_uvwidth
 
+    #pdb.set_trace()
     format_button_group.active = None
-    lasttemplate = template.value
+    lasttemplate = comparison.value
+    teststar = False
+    if 'star' in comparison.value: teststar = True
+    if 'galaxy' in comparison.value: teststar = True
+    if 'brown dwarf' in comparison.value: teststar = True
 
+    print 'teststar is', teststar
+        
     #IF YOU WANT COMPARISON SPECTRUM:
-    if comparison.value != lastcomparison:
+    if comparison.value != lastcomparison or teststar:
       stargalaxy = 'false'
+      
       if comparison.value == 'Earth':
           fn = 'earth_quadrature_radiance_refl.dat'
           fn = os.path.join(relpath, fn)
@@ -1540,7 +1549,7 @@ def update_data(attrname, old, new):
           Flx_c = model[:,1] 
           Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)
           
-      if comparison.value == 'Proxima Centauri':
+      if comparison.value == 'Proxima Centauri star':
           stargalaxy = 'true'
           fn = 'proxima_cen_sed.txt'
           fn = os.path.join(relpath2, fn)
@@ -1549,6 +1558,106 @@ def update_data(attrname, old, new):
           lamhr_c = model[:,0]
           Flx_c = model[:,1] 
           Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)
+
+      if comparison.value == 'T0 brown dwarf':
+          stargalaxy = 'true'
+          fn = 'T0_SDSS0837m0000_full_fluxed.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=13)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)          
+
+      if comparison.value == 'T9 brown dwarf':
+          stargalaxy = 'true'
+          fn = 'T9_WISE1741p2553_full_fluxed.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=13)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)               
+         
+      if comparison.value == 'L5 brown dwarf':
+          stargalaxy = 'true'
+          fn = 'L5_2MASS1821p1414_full_fluxed.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=13)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)    
+
+      if comparison.value == 'L8 brown dwarf':
+          stargalaxy = 'true'
+          fn = 'L8_SDSS0857p5708_full_fluxed.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=13)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)    
+
+      if comparison.value == 'NGC 337 spiral galaxy':
+          stargalaxy = 'true'
+          fn = 'NGC_0337_S_Uv-MIr_bms2014.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=9)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]*.0001 #A -> um
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)  
+          
+      if comparison.value == 'NGC 660 peculiar galaxy':
+          stargalaxy = 'true'
+          fn = 'NGC_0660_S_Uv-MIr_bms2014.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=9)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]*.0001 #A -> um
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)  
+
+      if comparison.value == 'NGC 4621 elliptical galaxy':
+          stargalaxy = 'true'
+          fn = 'NGC_4621_S_Uv-MIr_bms2014.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=9)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]*.0001 #A -> um
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)           
+
+      if comparison.value == 'NGC 5033 spiral galaxy':
+          stargalaxy = 'true'
+          fn = 'NGC_5033_S_Uv-MIr_bms2014.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=9)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]*.0001 #A -> um
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)
+
+      if comparison.value == 'Haro 6 blue compact dwarf galaxy':
+          stargalaxy = 'true'
+          fn = 'Haro_06_S_Uv-MIr_bms2014.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=9)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]*.0001 #A -> um
+          Flx_c = model[:,1]
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)   
+
+      if comparison.value == 'NGC 7476 spiral galaxy':
+          stargalaxy = 'true'
+          fn = 'NGC_7674_S_Uv-MIr_bms2014.txt'
+          fn = os.path.join(relpath2, fn)
+          model = np.loadtxt(fn, skiprows=9)
+#          import pdb; pdb.set_trace()
+          lamhr_c = model[:,0]*.0001 #A -> um
+          Flx_c = model[:,1] 
+          Flx_c = cg.downbin_spec(Flx_c, lamhr_c, lam, dlam)   
           
       global lammin_c
       global lammax_c
@@ -1556,45 +1665,49 @@ def update_data(attrname, old, new):
       if lammin_c <= 0.2:
          lammin_c = 0.2
       lammax_c=3.
-
               
-
-    if comparison.value != 'none':
+    print 'stargalaxy is ', stargalaxy
+    print 'teststar is', teststar
+#    import pdb; pdb.set_trace()
+    if comparison.value != 'none' and teststar == False:
       print 'comparison.value =', comparison.value
       print  'running comparison spectrum'
       try:
          distance_c
       except NameError:
-         if stargalaxy == 'false':
-            print "running comparison"
-            lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
+         print "running comparison"
+         lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
+                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value)
       else:
-         if  stargalaxy == 'false':
-            print "running comparison spectrum"
-            lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR,Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value)
+         print "running comparison spectrum"
+         lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
+                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR,Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value)
 
 
     if stargalaxy == 'true':
-       maxbright1 = max(Cratio)
+       #check for nans
+       nans = np.isnan(Flx_c)
+       Flx_c[nans] = np.interp(lam[nans], lam[~nans], Flx_c[~nans])
+
+       #Flx_c = np.nan_to_num(Flx_c)
+       maxbright1 = max(Cratio[np.isfinite(Cratio)])
        maxbright2 = max(Flx_c)
        ratio = maxbright1/maxbright2
        CratioC = [x * ratio for x in Flx_c]
        lamC = lam
        DtSNRC = [x * 0. for x in Flx_c]
        CratioC = np.nan_to_num(CratioC)
-
+       DtSNRC = np.nan_to_num(DtSNRC)
        
     if comparison.value == 'none':
        lamC = lamhr_ * 0.
        CratioC = Ahr_ *0.
-       DtSNRC = DtSNR * 0.
+       DtSNRC = lamhr_ * 0.
 
 
     lastcomparison = comparison.value
-
     #UPDATE DATA
+  #  pdb.set_trace()
     compare.data = dict(lam=lamC, cratio=CratioC*1e9)
     expcompare.data = dict(lam=lamC[np.isfinite(DtSNRC)], DtSNR=DtSNRC[np.isfinite(DtSNRC)])
         
@@ -1604,7 +1717,7 @@ def update_data(attrname, old, new):
 
     #ii = np.where(lam < 3.) #only want where reflected light, not thermal
     #iii = np.where(lamC < 3.)  #only want where reflected light, not thermal
-   # pdb.set_trace()
+   
     #Cratio_ok = Cratio[ii]
     #CratioC_ok = CratioC[iii]
     Cratio_ok = Cratio[~np.isnan(Cratio)]
@@ -1709,6 +1822,10 @@ ntherm  = Slider(title="Number of thermal surfaces:", value = 1, start=1, end=30
 ntherm.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
+gain  = Slider(title="Detector gain:", value = 1, start=1, end=1000., step=5, callback_policy='mouseup') 
+gain.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
 #ground based choice
 ground_based = Select(title="Simulate ground-based observation?", value="No", options=["No",  "Yes"])
 
@@ -1721,7 +1838,7 @@ observatory = Select(title="Simulate specific observatory?", value="No", options
 #select menu for planet
 template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU',"False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth' ])
 #select menu for comparison spectrum
-comparison = Select(title="Show comparison spectrum?", value ="none", options=["none", "Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU', "False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth', '-----','stars & galaxies:', '(arbitrary y units)', 'O5V star', 'B5V star', 'A5V star', 'F5V star', 'G2V star', 'G5V star', 'K2V star', 'M0V star', 'M2V star', 'M4V star', 'M5V star', 'Proxima Centauri'])
+comparison = Select(title="Show comparison spectrum?", value ="none", options=["none", "Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU', "False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth', '-----','stars & galaxies:', '(arbitrary y units)', 'O5V star', 'B5V star', 'A5V star', 'F5V star', 'G2V star', 'G5V star', 'K2V star', 'M0V star', 'M2V star', 'M4V star', 'M5V star', 'Proxima Centauri star', 'T0 brown dwarf', 'T9 brown dwarf', 'L5 brown dwarf', 'L8 brown dwarf', 'NGC 337 spiral galaxy', 'NGC 660 peculiar galaxy', 'NGC 4621 elliptical galaxy', 'NGC 5033 spiral galaxy', 'Haro 6 blue compact dwarf galaxy', 'NGC 7476 spiral galaxy'])
 
 #info text
 info_text = Div(text="""
@@ -1732,7 +1849,7 @@ The "Observation" tab controls telescope integration time per coronagraphic band
 <br><br>
 The "Telescope" tab controls whether to simulate specific observatory architecture,  mirror diameter,  telescope temperature, the number of thermal surfaces, and whether to show the currently considered LUVOIR bandpasses.
 <br><Br>
-The "Instrumentation" tab controls the instrument inner working angle (IWA), outer working angle (OWA), both in terms of lambda/D, and the spectrograph resolution for UV-VIS-NIR channels.
+The "Instrumentation" tab controls the instrument inner working angle (IWA), outer working angle (OWA), both in terms of lambda/D, the spectrograph resolution for UV-VIS-NIR channels, and the detector gain factor.
 <br><Br>
 The "Exposure Time Calculator" tab contains a slider to set a desired signal-to-noise ratio. In the "Exposure Time" plot tab, the simulator will display the integration time required to obtain this signal-to-noise ratio for the current telescope and instrumentation setup. Note that this tab applies only to the Exposure Time plot, not to the Spectrum plot.
 <br><br>
@@ -1748,7 +1865,7 @@ width=250, height=120)
 planet_text = Div(text="""Select parameters for simulated planet.""", width=250, height=15)
 obs_text = Div(text="""Choose telescope integration time per coronagraphic bandpass, the maximum length of time for a single exposure,  and whether to turn on a ground-based simulator.""", width=250, height=100)
 tel_text = Div(text="""Choose whether to use a specified telescope architecture, mirror diameter, telescope temperature, number of thermal surfaces, and whether to show the currently considered LUVOIR bandpasses.""", width = 250, height = 90)
-ins_text = Div(text="""Choose the scaling factor for the inner working angle (IWA), the outer working angle (OWA), spectrographic resolution for UV-VIS-NIR channels""", width=250, height=70)
+ins_text = Div(text="""Choose the scaling factor for the inner working angle (IWA), the outer working angle (OWA), spectrographic resolution for UV-VIS-NIR channels, and detector gain factor""", width=250, height=70)
 
 
 #
@@ -1756,7 +1873,7 @@ ins_text = Div(text="""Choose the scaling factor for the inner working angle (IW
 oo = column(children=[obs_text,exptime,dtmax, ground_based]) 
 pp = column(children=[planet_text, template, comparison, distance, radius, semimajor, exozodi]) 
 qq = column(children=[instruction0, text_input, instruction1, format_button_group, instruction2, link_box])
-ii = column(children=[ins_text, inner, outer,  resolution_UV, resolution, resolution_NIR])
+ii = column(children=[ins_text, inner, outer,  resolution_UV, resolution, resolution_NIR, gain])
 tt = column(children=[tel_text, observatory,diameter,temperature, ntherm, bandpass])
 ee = column(children=[want_snr])
 info = column(children=[info_text])

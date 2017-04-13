@@ -47,7 +47,8 @@ def count_rates(Ahr, lamhr, solhr,
                 lammin_uv = 0.2,
                 lammin_vis = 0.4,
                 lammin_nir = 0.85,
-                ntherm = 1, 
+                ntherm = 1,
+                gain = 1, 
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
                 SILENT = False, NIR = True, UV=True, THERMAL = True,
                 GROUND = False):
@@ -258,14 +259,19 @@ def count_rates(Ahr, lamhr, solhr,
 
     ##### Compute count rates #####
     cp     =  cplan(q, fpa, T, lam, dlam, Fp, diam2)                            # planet count rate
+    cp = cp * gain
     cz     =  czodi(q, X, T, lam, dlam, diam2, MzV)                           # solar system zodi count rate
+    cz = cz * gain
     cez    =  cezodi(q, X, T, lam, dlam, diam2, r, \
         Fstar(lam,Teff,Rs,1.,AU=True), Nez, MezV)                            # exo-zodi count rate
+    cez = cez * gain
     csp    =  cspeck(q, T, C, lam, dlam, Fstar(lam,Teff,Rs,d), diam2)         # speckle count rate
+    csp = csp * gain
     cD     =  cdark(De, X, lam, diam2, theta, DNHpix, IMAGE=IMAGE)            # dark current count rate
     cR     =  cread(Re, X, lam, diam2, theta, DNHpix, Dtmax, IMAGE=IMAGE)     # readnoise count rate
     if THERMAL:
         cth    =  ntherm*ctherm(q, X, lam, dlam, diam2, Tsys, emis)                      # internal thermal count rate
+        cth = cth * gain
     else:
         cth = np.zeros_like(cp)
     # Add earth thermal photons if GROUND
