@@ -427,6 +427,7 @@ def update_data(attrname, old, new):
        resolution_UV.value = 10.
     
 # Read-in new spectrum file only if changed
+    print 'lasttemplate is ', lasttemplate
     if template.value != lasttemplate:
        if template.value == 'Earth':
           fn = 'earth_quadrature_radiance_refl.dat'
@@ -962,7 +963,7 @@ def update_data(attrname, old, new):
 
     #pdb.set_trace()
     format_button_group.active = None
-    lasttemplate = comparison.value
+    lasttemplate = template.value #bug: was "comparison.value"
     teststar = False
     if 'star' in comparison.value: teststar = True
     if 'galaxy' in comparison.value: teststar = True
