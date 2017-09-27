@@ -1,4 +1,4 @@
-#####BOKEH CORONAGRAPH NOISE MODEL SIMULATOR#####
+####BOKEH CORONAGRAPH NOISE MODEL SIMULATOR#####
 # This code produces an interactive browser widget that runs
 # the coronagraph noise model
 #
@@ -903,7 +903,7 @@ def update_data(attrname, old, new):
     
     # Run coronagraph 
     lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain=gain.value)
+        cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain=gain.value, Tput=throughput.value, mirror=mirror_type.value)
 
 
     # Calculate background photon count rates
@@ -947,17 +947,40 @@ def update_data(attrname, old, new):
     if bandpass.value == "Yes":
        x_uv=[0.220, 0.240, 0.270, 0.305, 0.345, 0.390]
        y_uv = [0,0,0,0,0,0]
-       x_vis=[0.430, 0.485, 0.550, 0.625, 0.715, 0.820]
+       x_vis=[0.445, 0.510, 0.590, 0.670, 0.755, 0.825]
        y_vis = [0,0,0,0,0,0]
-       x_nir=[0.920, 1.06, 1.220, 1.405, 1.620, 1.870, 2.160, 2.495]       
+       x_nir=[0.880, 0.985, 1.105, 1.240, 1.390, 1.580, 1.740]       
        y_nir = [0,0,0,0,0,0,0,0]
        x_uvwidth=[0.03, 0.04, 0.04, 0.05, 0.05, 0.06]
-       x_viswidth = [0.060, 0.070, 0.080, 0.090, 0.110, 0.120]
-       x_nirwidth = [0.14, 0.16, 0.18, 0.210, 0.240, 0.280, 0.320, 0.370]
+       x_viswidth = [.070, .080, .100 ,  .080 , .110, .05]
+       x_nirwidth = [.120 , .110 , .150  ,  .140 ,  .180  ,  .220 , .120]
+
+   #    820-940
+   #    930-1040
+   #    1030-1180
+   #    1170-1310
+   #    1300-1480
+   #    1470-1690
+   #    1680-1800
+   #    one_nir = [820, 930, 1030, 1170, 1300, 1470, 1680]
+   #    two_nir = [940, 1040, 1180, 1310, 1480, 1690, 1800] 
+       
+
+       #x_uv=[0.220, 0.240, 0.270, 0.305, 0.345, 0.390]
+       #y_uv = [0,0,0,0,0,0]
+       #x_vis=[0.430, 0.485, 0.550, 0.625, 0.715, 0.820]
+       #y_vis = [0,0,0,0,0,0]
+       #x_nir=[0.920, 1.06, 1.220, 1.405, 1.620, 1.870, 2.160, 2.495]       
+       #y_nir = [0,0,0,0,0,0,0,0]
+       #x_uvwidth=[0.03, 0.04, 0.04, 0.05, 0.05, 0.06]
+       #x_viswidth = [0.060, 0.070, 0.080, 0.090, 0.110, 0.120]
+       #x_nirwidth = [0.14, 0.16, 0.18, 0.210, 0.240, 0.280, 0.320, 0.370]
+       
        uv_bandpasses.data = dict(x=x_uv, y=y_uv, width=x_uvwidth)
        vis_bandpasses.data = dict(x=x_vis, y=y_vis, width=x_viswidth)
        nir_bandpasses.data = dict(x=x_nir, y=y_nir, width=x_nirwidth)
-       
+
+
        print 'yes bandpasses'
       # print x_uvwidth
 
@@ -1678,11 +1701,11 @@ def update_data(attrname, old, new):
       except NameError:
          print "running comparison"
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value)
+                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value,  Tput=throughput.value, mirror=mirror_type.value)
       else:
          print "running comparison spectrum"
          lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR,Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value)
+                                                                                         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR,Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value,  Tput=throughput.value, mirror=mirror_type.value)
 
 
     if stargalaxy == 'true':
@@ -1811,6 +1834,10 @@ readnoise  = Slider(title="Read noise (counts/pixel)", value = 0.1, start=0.01, 
 readnoise.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
+throughput  = Slider(title="Aperture throughput", value = 0.20, start=0.01, end=1., step=0.01, callback_policy='mouseup') 
+throughput.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
 dtmax  = Slider(title="Maximum single exposure time (hours)", value = 0.3, start=0.0003, end=3, step=0.0001, callback_policy='mouseup') 
 dtmax.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
@@ -1819,7 +1846,7 @@ want_snr  = Slider(title="Desired signal-to-noise ratio? (only used for exposure
 want_snr.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-ntherm  = Slider(title="Number of thermal surfaces:", value = 1, start=1, end=30., step=1, callback_policy='mouseup') 
+ntherm  = Slider(title="Number of mirror surfaces:", value = 1, start=1, end=30., step=1, callback_policy='mouseup') 
 ntherm.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
@@ -1835,6 +1862,10 @@ bandpass = Select(title="Show LUVOIR bandpasses", value="No", options=["No",  "Y
 
 #observatory choice
 observatory = Select(title="Simulate specific observatory?", value="No", options=["No",  "LUVOIR 15 m", 'LUVOIR 9 m'])
+
+
+#mirror choice
+mirror_type = Select(title="Type of mirrors?", value="Perfect", options=["Perfect",  "Al", 'Au'])
 
 #select menu for planet
 template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU',"False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth' ])
@@ -1875,7 +1906,7 @@ oo = column(children=[obs_text,exptime,dtmax, ground_based])
 pp = column(children=[planet_text, template, comparison, distance, radius, semimajor, exozodi]) 
 qq = column(children=[instruction0, text_input, instruction1, format_button_group, instruction2, link_box])
 ii = column(children=[ins_text, inner, outer,  resolution_UV, resolution, resolution_NIR, gain])
-tt = column(children=[tel_text, observatory,diameter,temperature, ntherm, bandpass])
+tt = column(children=[tel_text, observatory,diameter,temperature, ntherm, bandpass, throughput, mirror_type])
 ee = column(children=[want_snr])
 info = column(children=[info_text])
 
@@ -1905,6 +1936,9 @@ for bb in [bandpass]:
 
 for bb in [observatory]:
     bb.on_change('value', update_data)
+
+for mimi in [mirror_type]:
+    mimi.on_change('value', update_data)
 
 inputs = Tabs(tabs=[ planet_tab, observation_tab, telescope_tab, instrument_tab, time_tab, download_tab, info_tab ])
 

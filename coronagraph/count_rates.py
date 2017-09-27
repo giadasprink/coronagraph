@@ -48,7 +48,8 @@ def count_rates(Ahr, lamhr, solhr,
                 lammin_vis = 0.4,
                 lammin_nir = 0.85,
                 ntherm = 1,
-                gain = 1, 
+                gain = 1,
+                mirror = 'perfect', #choices = perfect, Al, Au
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
                 SILENT = False, NIR = True, UV=True, THERMAL = True,
                 GROUND = False):
@@ -232,7 +233,7 @@ def count_rates(Ahr, lamhr, solhr,
 
     # Set throughput
     sep  = r/d*np.sin(alpha*np.pi/180.)*np.pi/180./3600. # separation in radians
-    T = set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, FIX_OWA=FIX_OWA, SILENT=SILENT)
+    T = set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, mirror, ntherm, FIX_OWA=FIX_OWA, SILENT=SILENT)
 
     # Modify throughput by atmospheric transmission if GROUND-based
     if GROUND:

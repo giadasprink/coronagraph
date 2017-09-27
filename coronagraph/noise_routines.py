@@ -870,7 +870,7 @@ def set_lenslet(lam, lammin, diam,
         
     return theta
 
-def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
+def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, mirror, ntherm,
                    FIX_OWA=False, SILENT=False):
     """
     Set wavelength-dependent telescope throughput
@@ -898,6 +898,8 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
     SILENT : bool, optional
         Suppress printing
     """
+    from scipy.interpolate import interp1d
+    
     Nlam = len(lam)
     T    = Tput + np.zeros(Nlam)
     iIWA = ( sep < IWA*lam/diam/1.e6 )
@@ -916,6 +918,39 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
             T[iOWA] = 0. #points outside OWA have no throughput
             if ~SILENT:
                 print 'WARNING: portions of spectrum outside OWA'
+
+    #apply wavelength-dependent mirror coatings:
+    if mirror == 'perfect':
+        T = T
+    import os
+    datadir = 'data/'
+    datadir = os.path.join(os.path.dirname(__file__), datadir)
+    if mirror == 'Al':
+        print 'mirror is Al'
+        fn = 'Al_reflect.csv'
+        fn = os.path.join(datadir, fn)
+        values = np.loadtxt(fn, skiprows=0)
+        wlT = values[:,0]
+        reflect = values[:,1]
+        from scipy import interpolate
+        interpfunc = interpolate.interp1d(wlT, reflect, kind='linear')
+        refl=interpfunc(lam)
+        mirror_trans = refl**ntherm
+        T = T * mirror_trans
+   
+    if mirror == 'Au':
+        fn = 'Au_reflect.csv'
+        fn = os.path.join(datadir, fn)
+        values = np.loadtxt(fn, skiprows=0)
+        wlT = values[:,0]
+        reflect = values[:,1]
+        from scipy import interpolate
+        interpfunc = interpolate.interp1d(wlT, reflect, kind='linear')
+        refl=interpfunc(lam)
+        mirror_trans = refl**ntherm
+        T = T * mirror_trans        
+        
+    print 'T is:', T
     return T
 
 def set_atmos_throughput(lam, dlam, convolve, plot=False):
