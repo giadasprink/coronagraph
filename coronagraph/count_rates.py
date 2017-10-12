@@ -50,6 +50,8 @@ def count_rates(Ahr, lamhr, solhr,
                 ntherm = 1,
                 gain = 1,
                 mirror = 'perfect', #choices = perfect, Al, Au
+                ssIWA = -1, #switched off if negative
+                ssOWA = -1, #switched off if negative
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
                 SILENT = False, NIR = True, UV=True, THERMAL = True,
                 GROUND = False):
@@ -127,6 +129,12 @@ def count_rates(Ahr, lamhr, solhr,
         V-band exozodiacal light surface brightness [mag/arcsec**2]
     wantsnr : float, optional
         Desired signal-to-noise ratio in each pixel
+    ntherm : float, optional
+        Number of thermal surfaces
+    ssIWA : float, optional
+        Starshade-like IWA (fixed angle in mas)
+    ssOWA : float, optional
+        Starshade-like OWA (fixed angle in arcsec)
     FIX_OWA : bool, optional
         Set to fix OWA at OWA*lammin/D, as would occur if lenslet array is limiting the OWA
     COMPUTE_LAM : bool, optional
@@ -233,7 +241,18 @@ def count_rates(Ahr, lamhr, solhr,
 
     # Set throughput
     sep  = r/d*np.sin(alpha*np.pi/180.)*np.pi/180./3600. # separation in radians
-    T = set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, mirror, ntherm, FIX_OWA=FIX_OWA, SILENT=SILENT)
+
+
+    if ssIWA != -1:
+        ssIWArad = ssIWA * (np.pi/648000000.) # ssIWA in radians
+    else:
+        ssIWArad = -1
+    if ssIWArad != -1:
+        ssOWArad = ssIWA * (np.pi/648000.) # ssIWA in radians
+    else:
+        ssOWArad = -1
+    T = set_throughput(lam, Tput, diam, sep, IWA, OWA, ssIWArad, ssOWArad, lammin, mirror, ntherm,FIX_OWA=FIX_OWA, SILENT=SILENT)
+
 
     # Modify throughput by atmospheric transmission if GROUND-based
     if GROUND:

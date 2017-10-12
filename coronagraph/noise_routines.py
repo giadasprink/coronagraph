@@ -870,7 +870,8 @@ def set_lenslet(lam, lammin, diam,
         
     return theta
 
-def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, mirror, ntherm,
+
+def set_throughput(lam, Tput, diam, sep, IWA, OWA, ssIWArad, ssOWArad, lammin, mirror, ntherm,
                    FIX_OWA=False, SILENT=False):
     """
     Set wavelength-dependent telescope throughput
@@ -889,6 +890,10 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, mirror, ntherm,
         Inner working angle
     OWA : float
         Outer working angle
+    ssIWArad : float
+        Starshade IWA
+    ssOWArad  :float
+        Starshade OWA
     lammin : float
         Minimum wavelength
     FIX_OWA : bool, optional
@@ -918,6 +923,7 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, mirror, ntherm,
             T[iOWA] = 0. #points outside OWA have no throughput
             if ~SILENT:
                 print 'WARNING: portions of spectrum outside OWA'
+
 
     #apply wavelength-dependent mirror coatings:
     if mirror == 'perfect':
@@ -951,6 +957,15 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin, mirror, ntherm,
         T = T * mirror_trans        
         
     print 'T is:', T
+
+    if ssIWArad != -1:
+        if sep < ssIWArad:
+            T    = Tput + np.zeros(Nlam)
+    if ssOWArad != -1:
+        if sep > ssOWArad:
+            T    = Tput + np.zeros(Nlam)           
+
+
     return T
 
 def set_atmos_throughput(lam, dlam, convolve, plot=False):
