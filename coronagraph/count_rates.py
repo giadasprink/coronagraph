@@ -54,7 +54,7 @@ def count_rates(Ahr, lamhr, solhr,
                 ssOWA = -1, #switched off if negative
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
                 SILENT = False, NIR = True, UV=True, THERMAL = True,
-                GROUND = False):
+                GROUND = False, writeout=False, writeoutpath=''):
     """
     Runs coronagraph model (Robinson et al., 2016) to calculate planet and noise
     photon count rates for specified telescope and system parameters.
@@ -63,7 +63,7 @@ def count_rates(Ahr, lamhr, solhr,
     ----------
     Ahr : array
         High-res, wavelength-dependent planetary geometric albedo
-    lamhr : array
+    lamhr : arrays
         High-res wavelength grid  [um]
     solhr : array
         High-res TOA solar spectrum [W/m**2/um]
@@ -337,5 +337,12 @@ def count_rates(Ahr, lamhr, solhr,
 
     # Exposure time to SNR
     DtSNR = exptime_element(lam, cp, cnoise, wantsnr)
+
+    # write text output file
+    if writeout:
+        data_tag = writeoutpath+'output.txt'
+        y_sav = np.array([lam,Cratio,A,q,cp,csp,cz,cez,cD,cR,cth,DtSNR])
+        np.savetxt(data_tag, y_sav.T)
+        print 'Saved: ' + data_tag
 
     return lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR
