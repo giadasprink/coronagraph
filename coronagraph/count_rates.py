@@ -38,7 +38,7 @@ def count_rates(Ahr, lamhr, solhr,
                 Re_VIS = 0.0,
                 Re_NIR = 0.01, #was told 10 e- per pixel per 100 MHz 
                 Dtmax  = 1.0,
-                X      = 1.5,
+                X      = 1.4, #changed from 1.5 
                 qe     = 0.9,
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22

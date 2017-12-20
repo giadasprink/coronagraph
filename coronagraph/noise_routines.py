@@ -443,7 +443,7 @@ def ccic(Rc, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=False):
     return Npix/(Dtmax*3600.)*Rc
 
 
-def f_airy(X, CIRC=False):
+def f_airy(X, CIRC=True):
     """
     Fraction of Airy power contained in square or circular aperture
 
@@ -461,8 +461,8 @@ def f_airy(X, CIRC=False):
     """
     if CIRC:
         # Circular aperture
-        # fraction of power in Airy disk to X*lambda/D
-        fpa = 1. - special.jv(0,np.pi*X)**2. - special.jv(1,np.pi*X)**2.
+        # fraction of power in Airy disk to X*lambda/D - check 
+        fpa = 1. - special.jv(0,np.pi*(X/2.))**2. - special.jv(1,np.pi*(X/2.))**2.
     else:
         # Square aperture
         X_grid   = np.arange(100)/10.
@@ -510,7 +510,7 @@ def f_airy_int(X):
     Iairy = np.zeros([N,N])
     for i in range(N):
         for j in range(N):
-            # compute Airy intensity
+            # compute Airy intensity - check
             Iairy[i,j] = 4. * special.jv(1,np.pi*np.sqrt(xg[i]**2. + yg[j]**2.))**2. \
             /(np.pi*np.sqrt(xg[i]**2. + yg[j]**2.))**2.
     Iairy[0,0] = 1.0
