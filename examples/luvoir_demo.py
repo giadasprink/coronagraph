@@ -16,9 +16,6 @@ import coronagraph as cg
 # PARAMETERS
 ################################
 
-# planet
-whichplanet = 'hazyarchean'
-
 # Integration time (hours)
 Dt = 20.0
 
@@ -63,14 +60,14 @@ solhr = model[:,2]
 # Calculate hi-resolution reflectivity
 Ahr   = np.pi*(np.pi*radhr/solhr)
 
-
 ################################
 # RUN CORONAGRAPH MODEL
 ################################
 
 # Run coronagraph with default LUVOIR telescope (aka no keyword arguments)
 lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-    cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez)
+    cg.count_rates(Ahr, lamhr, solhr, alpha, Phi, Rp, Teff, Rs, r, d, Nez,\
+                   )
 
 # Calculate background photon count rates
 cb = (cz + cez + csp + cD + cR + cth)

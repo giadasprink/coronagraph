@@ -443,7 +443,7 @@ def ccic(Rc, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=False):
     return Npix/(Dtmax*3600.)*Rc
 
 
-def f_airy(X, CIRC=False):
+def f_airy(X, CIRC=True):
     """
     Fraction of Airy power contained in square or circular aperture
 
@@ -461,8 +461,8 @@ def f_airy(X, CIRC=False):
     """
     if CIRC:
         # Circular aperture
-        # fraction of power in Airy disk to X*lambda/D
-        fpa = 1. - special.jv(0,np.pi*X)**2. - special.jv(1,np.pi*X)**2.
+        # fraction of power in Airy disk to X*lambda/D - check 
+        fpa = 1. - special.jv(0,np.pi*(X/2.))**2. - special.jv(1,np.pi*(X/2.))**2.
     else:
         # Square aperture
         X_grid   = np.arange(100)/10.
@@ -510,7 +510,7 @@ def f_airy_int(X):
     Iairy = np.zeros([N,N])
     for i in range(N):
         for j in range(N):
-            # compute Airy intensity
+            # compute Airy intensity - check
             Iairy[i,j] = 4. * special.jv(1,np.pi*np.sqrt(xg[i]**2. + yg[j]**2.))**2. \
             /(np.pi*np.sqrt(xg[i]**2. + yg[j]**2.))**2.
     Iairy[0,0] = 1.0
@@ -870,7 +870,8 @@ def set_lenslet(lam, lammin, diam,
         
     return theta
 
-def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
+
+def set_throughput(lam, Tput, diam, sep, IWA, OWA, ssIWArad, ssOWArad, lammin, mirror, ntherm,
                    FIX_OWA=False, SILENT=False):
     """
     Set wavelength-dependent telescope throughput
@@ -889,6 +890,10 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
         Inner working angle
     OWA : float
         Outer working angle
+    ssIWArad : float
+        Starshade IWA
+    ssOWArad  :float
+        Starshade OWA
     lammin : float
         Minimum wavelength
     FIX_OWA : bool, optional
@@ -898,6 +903,8 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
     SILENT : bool, optional
         Suppress printing
     """
+    from scipy.interpolate import interp1d
+    
     Nlam = len(lam)
     T    = Tput + np.zeros(Nlam)
     iIWA = ( sep < IWA*lam/diam/1.e6 )
@@ -916,6 +923,49 @@ def set_throughput(lam, Tput, diam, sep, IWA, OWA, lammin,
             T[iOWA] = 0. #points outside OWA have no throughput
             if ~SILENT:
                 print 'WARNING: portions of spectrum outside OWA'
+
+
+    #apply wavelength-dependent mirror coatings:
+    if mirror == 'perfect':
+        T = T
+    import os
+    datadir = 'data/'
+    datadir = os.path.join(os.path.dirname(__file__), datadir)
+    if mirror == 'Al':
+        print 'mirror is Al'
+        fn = 'Al_reflect.csv'
+        fn = os.path.join(datadir, fn)
+        values = np.loadtxt(fn, skiprows=0)
+        wlT = values[:,0]
+        reflect = values[:,1]
+        from scipy import interpolate
+        interpfunc = interpolate.interp1d(wlT, reflect, kind='linear')
+        refl=interpfunc(lam)
+        mirror_trans = refl**ntherm
+        T = T * mirror_trans
+   
+    if mirror == 'Au':
+        fn = 'Au_reflect.csv'
+        fn = os.path.join(datadir, fn)
+        values = np.loadtxt(fn, skiprows=0)
+        wlT = values[:,0]
+        reflect = values[:,1]
+        from scipy import interpolate
+        interpfunc = interpolate.interp1d(wlT, reflect, kind='linear')
+        refl=interpfunc(lam)
+        mirror_trans = refl**ntherm
+        T = T * mirror_trans        
+        
+    print 'T is:', T
+
+    if ssIWArad != -1:
+        if sep < ssIWArad:
+            T    = Tput + np.zeros(Nlam)
+    if ssOWArad != -1:
+        if sep > ssOWArad:
+            T    = Tput + np.zeros(Nlam)           
+
+
     return T
 
 def set_atmos_throughput(lam, dlam, convolve, plot=False):
