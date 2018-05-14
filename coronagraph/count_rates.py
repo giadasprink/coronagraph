@@ -5,7 +5,7 @@ from .degrade_spec import degrade_spec, downbin_spec
 from .convolve_spec import convolve_spec
 from .noise_routines import Fstar, Fplan, FpFs, cplan, czodi, cezodi, cspeck, \
     cdark, cread, ctherm, ccic, f_airy, ctherm_earth, construct_lam, \
-    set_quantum_efficiency, set_read_noise, set_dark_current, set_lenslet, \
+    set_quantum_efficiency, set_read_noise, set_dark_current, set_cic, set_lenslet, \
     set_throughput, set_atmos_throughput, get_thermal_ground_intensity, \
     exptime_element, lambertPhaseFunction
 import pdb
@@ -18,32 +18,39 @@ def count_rates(Ahr, lamhr, solhr,
                 mode   = "IFS",
                 filter_wheel = None,
                 Phi = -1, #chosen as a value a user would never set 
-                lammin = 0.4,
+                lammin = 0.45,
                 lammax = 2.5,
                 Res    = 70.0,
-                diam   = 10.0,
+                diam   = 6.5,
                 collect_area = -1,
                 Tput   = 0.15,
                 Tput_uv = 0.15,
                 Tput_nir = 0.15,
-                o_Tput_uv = 0.12,
-                o_Tput_vis = 0.32,
-                o_Tput_nir = 0.60,
+                o_Tput_uv = 1.,
+                o_Tput_vis = 1.,
+                o_Tput_nir = 1.,
                 C      = 1e-10,
                 IWA    = 3.0,
+                IWA_UV = -1,
+                IWA_NIR = -1,
                 OWA    = 20.0,
+                OWA_UV = -1,
+                OWA_NIR = -1,
                 Tsys   = 150.0,
                 Tdet   = 50.0,
-                emis   = 0.09,
+                emis   = 0.7, #is this right? 
                 De_UV  = 3e-5, #BOL dark current 
                 De_VIS = 3e-5, #BOL dark current
-                De_NIR = 2e-3, #specs for teledyne detector 
+                De_NIR = 2e-3, #specs for teledyne detector
+                CIC_UV = 0.0,
+                CIC_VIS = 0.0,
+                CIC_NIR = 0.0,
                 DNHpix = 3.0,
                 Re_UV  = 0.0, #Vis & UV (NIR will be different but not known yet)
                 Re_VIS = 0.0,
-                Re_NIR = 0.01, #was told 10 e- per pixel per 100 MHz 
+                Re_NIR = 0.0, #was told 10 e- per pixel per 100 MHz 
                 Dtmax  = 1.0,
-                X      = 1.4, #changed from 1.5 
+                X      = 1., #changed from 1.5 
                 qe     = 0.9,
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22
@@ -51,20 +58,22 @@ def count_rates(Ahr, lamhr, solhr,
                 Res_UV = -1,
                 lammin_uv = 0.2,
                 lammin_vis = 0.4,
-                lammin_nir = 0.82,
+                lammin_nir = 1.0,
                 ntherm = 1,
                 gain = 1,
+                bg_factor = 1.,
                 mirror = 'perfect', #choices = perfect, Al, Au
                 ssIWA = -1, #switched off if negative
                 ssOWA = -1, #switched off if negative
                 wantsnr=10.0, FIX_OWA = False, COMPUTE_LAM = False,
                 SILENT = False, NIR = True, UV=True, THERMAL = True,
-                GROUND = False, writeout=False, writeoutpath='', LUVOIR_A = False):
+                GROUND = False, writeout=False, writeoutpath='',
+                rebin_vis=False, LUVOIR_A = False):
     """
     Runs coronagraph model (Robinson et al., 2016) to calculate planet and noise
     photon count rates for specified telescope and system parameters.
 
-    Parameters
+in    Parameters
     ----------
     Ahr : array
         High-res, wavelength-dependent planetary geometric albedo
@@ -236,14 +245,15 @@ def count_rates(Ahr, lamhr, solhr,
     # Set Quantum Efficiency
     q = set_quantum_efficiency(lam, qe, NIR=NIR)
 
-    # Set Dark current and Read noise
+    # Set Dark current and Read noise and clock induced charge
     print De_UV, De_VIS, De_NIR
     De = set_dark_current(lam, De_UV, De_VIS, De_NIR, lammax, Tdet, NIR=NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
     Re = set_read_noise(lam, Re_UV, Re_VIS, Re_NIR, NIR=NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
-
+    cic = set_cic(lam, CIC_UV, CIC_VIS, CIC_NIR, NIR=NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
+    
     # Set Angular size of lenslet
     theta = set_lenslet(lam, lammin, diam, NIR=NIR, UV=UV, lammin_vis = lammin_vis, lammin_nir=lammin_nir, lammin_uv=lammin_uv)
-
+    
     # Set throughput
     sep  = r/d*np.sin(alpha*np.pi/180.)*np.pi/180./3600. # separation in radians
 
@@ -256,9 +266,10 @@ def count_rates(Ahr, lamhr, solhr,
         ssOWArad = ssIWA * (np.pi/648000.) # ssIWA in radians
     else:
         ssOWArad = -1
-    T = set_throughput(lam, Tput, Tput_uv, Tput_nir, o_Tput_vis, o_Tput_uv, o_Tput_nir, diam, sep, IWA, OWA, ssIWArad, ssOWArad, lammin, mirror, ntherm,FIX_OWA=FIX_OWA, SILENT=SILENT, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir, LUVOIR_A = LUVOIR_A)
+    T = set_throughput(lam, Tput, Tput_uv, Tput_nir, o_Tput_vis, o_Tput_uv, o_Tput_nir, diam, sep, IWA, IWA_UV, IWA_NIR, OWA, OWA_UV, OWA_NIR, ssIWArad, ssOWArad, lammin, mirror, ntherm,FIX_OWA=FIX_OWA, SILENT=SILENT, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir, LUVOIR_A = LUVOIR_A)
 
 
+    
     # Modify throughput by atmospheric transmission if GROUND-based
     if GROUND:
         Tatmos = set_atmos_throughput(lam, dlam, convolution_function)
@@ -280,6 +291,9 @@ def count_rates(Ahr, lamhr, solhr,
     # Compute fluxes
     #Fs = Fstar(lam, Teff, Rs, r, AU=True) # stellar flux on planet
     Fp = Fplan(A, Phi, Fs, Rp, d)         # planet flux at telescope
+    i =  (lam >= 0.54) & (lam <= 0.56)
+
+    
     Cratio = FpFs(A, Phi, Rp, r)
 
     ##### Compute count rates #####
@@ -294,6 +308,7 @@ def count_rates(Ahr, lamhr, solhr,
     csp = csp * gain
     cD     =  cdark(De, X, lam, diam2, theta, DNHpix, IMAGE=IMAGE)            # dark current count rate
     cR     =  cread(Re, X, lam, diam2, theta, DNHpix, Dtmax, IMAGE=IMAGE)     # readnoise count rate
+
     if THERMAL:
         cth    =  ntherm*ctherm(q, X, lam, dlam, diam2, Tsys, emis)                      # internal thermal count rate
         cth = cth * gain
@@ -318,10 +333,17 @@ def count_rates(Ahr, lamhr, solhr,
             ax1.set_ylabel("Photon Count Rate [1/s]")
             ax1.set_xlabel("Wavelength [um]")
             plt.show()
-
-    cb = (cz + cez + csp + cD + cR + cth)
-    cnoise =  cp + 2*cb                # assumes background subtraction
+            
     ctot = cp + cz + cez + csp + cD + cR + cth
+    ccic = ctot * cic #is this right??
+    ctot = ctot + ccic
+
+    cb = (cz + cez + csp + cD + cR + cth + ccic)
+    cnoise =  cp + bg_factor*cb                # assumes background subtraction
+    ctot = cp + cz + cez + csp + cD + cR + cth
+   # ccic = ctot * cic #is this right??
+   # ctot = ctot + ccic
+   # cb = cb + ccic 
 
     '''
     Giada: where does the factor of 2 come from [above]?
@@ -343,6 +365,25 @@ def count_rates(Ahr, lamhr, solhr,
     # Exposure time to SNR
     DtSNR = exptime_element(lam, cp, cnoise, wantsnr)
 
+    #if rebin_vis then rebin visible channel to R=75 for everywhere except O2 A band
+    if rebin_vis: 
+        Res_lo = 75
+        lam_lo, dlam_lo = construct_lam(lammin, lammax, Res_lo, UV=UV, NIR=NIR, Res_UV = Res_UV, Res_NIR = Res_NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
+        #stitch wl grids together around oxygen:
+        io2 = (lam > 0.73) & (lam < 0.8)
+        ishort = (lam_lo <= 0.73)
+        ilong = (lam_lo >= 0.8)
+        lam_rebin = np.concatenate([lam_lo[ishort], lam[io2], lam_lo[ilong]])
+        dlam_rebin = np.concatenate([dlam_lo[ishort], dlam[io2], dlam_lo[ilong]])
+        #downbin everything now 
+        cp_lo = convolution_function(cp,lam,lam_rebin,dlam=dlam_rebin)
+        cnoise_lo = convolution_function(cnoise,lam,lam_rebin,dlam=dlam_rebin)
+        DtSNR_lo = exptime_element(lam_rebin, cp_lo, cnoise_lo, wantsnr)
+
+        
+
+    
+    
     # write text output file
     if writeout:
         data_tag = writeoutpath+'output.txt'
@@ -350,4 +391,5 @@ def count_rates(Ahr, lamhr, solhr,
         np.savetxt(data_tag, y_sav.T)
         print 'Saved: ' + data_tag
 
-    return lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR
+        print lam 
+    return lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, ccic, DtSNR

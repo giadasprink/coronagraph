@@ -74,7 +74,10 @@ def Fplan(A, Phi, Fstar, Rp, d, AU=False):
     ds    = 3.08567e16     # parsec (m)
     if AU:
         ds = 1.495979e11     # AU (m)
+    
     return A*Phi*Fstar*(Rp*Re/d/ds)**2.
+
+
 
 def Fobj(Fo, Ro, d, AU=False):
     """
@@ -186,7 +189,7 @@ def cobj(q, fpa, T, lam, dlam, Fo, D):
     hc  = 1.986446e-25 # h*c (kg*m**3/s**2)
     return np.pi*q*fpa*T*(lam*1.e-6/hc)*dlam*Fo*(D/2.)**2.
 
-def czodi(q, X, T, lam, dlam, D, Mzv, SUN=False, CIRC=False):
+def czodi(q, X, T, lam, dlam, D, Mzv, SUN=False, CIRC=True):
     """
     Zodiacal light count rate
 
@@ -229,15 +232,14 @@ def czodi(q, X, T, lam, dlam, D, Mzv, SUN=False, CIRC=False):
         Fsol  = Fstar(lam, Teffs, Rs, 1., AU=True)
     rat   = np.zeros(len(lam))
     rat[:]= Fsol[:]/FsolV # ratio of solar flux to V-band solar flux
-    if CIRC:
-        # circular aperture size (arcsec**2)
-        Omega = np.pi*(X/2.*lam*1e-6/D*180.*3600./np.pi)**2.
+    if CIRC:        # circular aperture size (arcsec**2)
+        Omega = np.pi*(X/1.*lam*1e-6/D*180.*3600./np.pi)**2.
     else:
         # square aperture size (arcsec**2)
         Omega = (X*lam*1e-6/D*180.*3600./np.pi)**2.
     return np.pi*q*T*Omega*dlam*(lam*1.e-6/hc)*(D/2)**2.*rat*F0V*10**(-Mzv/2.5)
 
-def cezodi(q, X, T, lam, dlam, D, r, Fstar, Nez, Mezv, SUN=False, CIRC=False):
+def cezodi(q, X, T, lam, dlam, D, r, Fstar, Nez, Mezv, SUN=False, CIRC=True):
     """
     Exozodiacal light count rate
 
@@ -286,7 +288,7 @@ def cezodi(q, X, T, lam, dlam, D, r, Fstar, Nez, Mezv, SUN=False, CIRC=False):
     rat[:]= Fstar[:]/FsolV # ratio of solar flux to V-band solar flux
     if CIRC:
         # circular aperture size (arcsec**2)
-        Omega = np.pi*(X/2.*lam*1e-6/D*180.*3600./np.pi)**2.
+        Omega = np.pi*(X/1.*lam*1e-6/D*180.*3600./np.pi)**2.
     else:
         # square aperture size (arcsec**2)
         Omega = (X*lam*1e-6/D*180.*3600./np.pi)**2.
@@ -321,7 +323,7 @@ def cspeck(q, T, C, lam, dlam, Fstar, D):
     hc    = 1.986446e-25 # h*c (kg*m**3./s**2.)
     return np.pi*q*T*C*dlam*Fstar*(lam*1.e-6/hc)*(D/2.)**2.
 
-def cdark(De, X, lam, D, theta, DNhpix, IMAGE=False, CIRC=False):
+def cdark(De, X, lam, D, theta, DNhpix, IMAGE=False, CIRC=True):
     """
     Dark current photon count rate
 
@@ -462,7 +464,9 @@ def f_airy(X, CIRC=True):
     if CIRC:
         # Circular aperture
         # fraction of power in Airy disk to X*lambda/D - check 
-        fpa = 1. - special.jv(0,np.pi*(X/2.))**2. - special.jv(1,np.pi*(X/2.))**2.
+        fpa =  1. - special.jv(0,np.pi*X)**2. - special.jv(1,np.pi*X)**2.
+        #1. - special.jv(0,np.pi*(X/2.))**2. - special.jv(1,np.pi*(X/2.))**2.
+       # ```   1. - special.jv(0,np.pi*X)**2. - special.jv(1,np.pi*X)**2.```
     else:
         # Square aperture
         X_grid   = np.arange(100)/10.
@@ -773,9 +777,9 @@ def set_dark_current(lam, De_UV, De_VIS, De_NIR, lammax, Tdet, NIR=False, De_nir
     De[iUV] = De_UV
     De[iVIS] = De_VIS
     De[iNIR] = De_NIR
-    print De_UV, De_VIS, De_NIR
-    print 'De is'
-    print De
+  #  print De_UV, De_VIS, De_NIR
+  #  print 'De is'
+  #  print De
     
   #  if NIR:
    #     iNIR  = (lam > 1.0)
@@ -789,6 +793,57 @@ def set_dark_current(lam, De_UV, De_VIS, De_NIR, lammax, Tdet, NIR=False, De_nir
     #    De[iNIR][iDe] = De_nir
 
     return De
+
+
+def set_cic(lam, CIC_UV, CIC_VIS, CIC_NIR,  NIR=False, lammin_uv=0.2, lammin_vis=0.4, lammin_nir=0.82):
+    """
+    Set clock induced charge grid as a function of wavelength
+
+    Parameters
+    ----------
+    lam : array-like
+        Wavelength grid [microns]
+    CIC : float
+        CIC count rate per pixel per photon count (s**-1)
+    lammax : float
+        Maximum wavelength
+    Tdet : float
+        Detector Temperature [K]
+    NIR : bool, optional
+        Use near-IR detector proporties
+    De_nir : float, optional
+        NIR minimum dark current count rate per pixel
+
+    Returns
+    -------
+    Cic : array-like
+        Dark current as a function of wavelength
+    """
+    Cic = np.zeros(len(lam))
+#    import pdb; pdb.set_trace()
+    iUV = (lam < lammin_vis)
+    iVIS = (lam >= lammin_vis) & (lam <= lammin_nir)
+    iNIR = (lam > lammin_nir)
+
+    Cic[iUV] = CIC_UV
+    Cic[iVIS] = CIC_VIS
+    Cic[iNIR] = CIC_NIR
+
+    
+  #  if NIR:
+  #     iNIR  = (lam > 1.0)
+        # Set dark current based on NIR detector properties
+   #     if ( lammax <= 2.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-120.)*7./100. )
+   #     if ( lammax > 2.0 ) and ( lammax <= 4.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-80.)*9./140. )
+    #    if ( lammax > 4.0 ) and ( lammax <= 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-40.)*11./140. )
+    #    if ( lammax > 7.0 ): De[iNIR] = De_nir * np.power(10., (Tdet-30.)*11./70. )
+    #    # Don't let dark current fall below a threshold
+    #    iDe = (De[iNIR] < De_nir)
+    #    De[iNIR][iDe] = De_nir
+
+    return Cic
+
+
 
 def set_read_noise(lam,  Re_UV, Re_VIS, Re_NIR, NIR=False, Re_nir=2., lammin_uv=0.2, lammin_vis=0.4, lammin_nir=0.85):
     """
@@ -871,7 +926,7 @@ def set_lenslet(lam, lammin, diam,
     return theta
 
 
-def set_throughput(lam, Tput, Tput_uv, Tput_nir, o_Tput_vis, o_Tput_uv, o_Tput_nir, diam, sep, IWA, OWA, ssIWArad, ssOWArad, lammin, mirror, ntherm, FIX_OWA=False, SILENT=False, lammin_uv=0.2, lammin_vis=0.4, lammin_nir=0.82, LUVOIR_A = False):
+def set_throughput(lam, Tput, Tput_uv, Tput_nir, o_Tput_vis, o_Tput_uv, o_Tput_nir, diam, sep, IWA, IWA_UV, IWA_NIR, OWA, OWA_UV, OWA_NIR,  ssIWArad, ssOWArad, lammin, mirror, ntherm, FIX_OWA=False, SILENT=False, lammin_uv=0.2, lammin_vis=0.4, lammin_nir=0.82, LUVOIR_A = False):
 
     """
     Set wavelength-dependent telescope throughput
@@ -907,17 +962,40 @@ def set_throughput(lam, Tput, Tput_uv, Tput_nir, o_Tput_vis, o_Tput_uv, o_Tput_n
     
     Nlam = len(lam)
     T    = 1 + np.zeros(Nlam)
+    
 
     #wavelength ranges 
     iUV = (lam < lammin_vis)
     iVIS = (lam >= lammin_vis) & (lam <= lammin_nir)
     iNIR = (lam > lammin_nir)
+    T_UV = T[iUV]
+    T_VIS = T[iVIS]
+    T_NIR = T[iNIR]
 
+  
+    
     iIWA = ( sep < IWA*lam/diam/1.e6 )
+    if IWA_UV != -1 and IWA_NIR != -1:
+        iIWA_VIS =  ( sep < IWA*lam[iVIS]/diam/1.e6 )
+        iIWA_UV = ( sep < IWA_UV*lam[iUV]/diam/1.e6 )
+        iIWA_NIR = ( sep < IWA_NIR*lam[iNIR]/diam/1.e6 )
+        
+
     if (True if True in iIWA else False):
         T[iIWA] = 0. #zero transmission for points inside IWA have no throughput
         if ~SILENT:
             print 'WARNING: portions of spectrum inside IWA'
+    if IWA_UV != -1 and IWA_NIR != -1:
+            if (True if True in iIWA_UV else False):
+                T_UV[iIWA_UV] = 0.
+            if (True if True in iIWA_VIS else False):
+                T_VIS[iIWA_VIS] = 0.
+            if (True if True in iIWA_NIR else False):                
+                T_NIR[iIWA_NIR] = 0.
+
+    if IWA_UV != -1 and IWA_NIR != -1:
+        T = np.concatenate([T_UV, T_VIS, T_NIR])
+
     if FIX_OWA:
         if ( sep > OWA*lammin/diam/1.e6 ):
             T[:] = 0. #planet outside OWA, where there is no throughput
@@ -925,10 +1003,26 @@ def set_throughput(lam, Tput, Tput_uv, Tput_nir, o_Tput_vis, o_Tput_uv, o_Tput_n
                 print 'WARNING: planet outside fixed OWA'
     else:
         iOWA = ( sep > OWA*lam/diam/1.e6 )
+        if OWA_UV != -1 and OWA_NIR != -1:
+                iOWA_UV = ( sep > OWA_UV*lam[iUV]/diam/1.e6 )
+                iOWA_VIS = ( sep > OWA*lam[iVIS]/diam/1.e6 )
+                iOWA_NIR = ( sep > OWA_NIR*lam[iNIR]/diam/1.e6 )
         if (True if True in iOWA else False):
             T[iOWA] = 0. #points outside OWA have no throughput
             if ~SILENT:
                 print 'WARNING: portions of spectrum outside OWA'
+            if OWA_UV != -1 and OWA_NIR != -1:
+                if (True if True in iOWA_UV else False):
+                    T_UV[iOWA_UV] = 0.
+                if (True if True in iOWA_VIS else False):
+                    T_VIS[iOWA_VIS] = 0.
+                if (True if True in iOWA_NIR else False):                
+                    T_NIR[iOWA_NIR] = 0.
+    if OWA_UV != -1 and OWA_NIR != -1:
+
+        T = np.concatenate([T_UV, T_VIS, T_NIR])
+        
+    #import pdb; pdb.set_trace()  
     #throughputs
     Tuv = Tput_uv * o_Tput_uv
     Tvis = Tput * o_Tput_vis
@@ -957,6 +1051,7 @@ def set_throughput(lam, Tput, Tput_uv, Tput_nir, o_Tput_vis, o_Tput_uv, o_Tput_n
        T[iUV] = T[iUV] * Tput_uv * optTput[iUV]
        T[iVIS] = T[iVIS] * Tput * optTput[iVIS]
        T[iNIR] =  T[iNIR] * Tput_nir * optTput[iNIR]
+       print "using LUVOIR A throughput"
 
     """
     import os

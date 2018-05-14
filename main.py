@@ -45,14 +45,17 @@ relpath2 = os.path.join(os.path.dirname(__file__), stardir)
 # PARAMETERS
 ################################
 
+#background subtraction
+bg_factor = 1. #used to be 2
+
 # Integration time (hours)
 Dt = 80.0 # - SLIDER
 
 # Telescopes params
 diam = 12.7 # mirror diameter - SLIDER
-Res = 150. # vis resolution - SLIDER
-Res_UV = 20. # UV resolution - SLIDER
-Res_NIR = 100. #NIR resolution - SLIDER
+Res = 140. # vis resolution - SLIDER
+Res_UV = 7. # UV resolution - SLIDER
+Res_NIR = 75. #NIR resolution - SLIDER
 Tsys = 270. # system temperature - SLIDER
 
 # Planet params
@@ -66,18 +69,21 @@ Teff  = 5780.   # Sun-like Teff (K)
 Rs    = 1.      # star radius in solar radii
 
 # Planetary system params
-d    = 10.     # distance to system (pc)  - SLIDER 
+d    = 7.     # distance to system (pc)  - SLIDER 
 Nez  = 3.      # number of exo-zodis  - SLIDER
 
 # Instrumental Params
 owa = 30. #OWA scaling factor - SLIDER
 iwa = 3. #IWA scaling factor - SLIDER
-De_UV = 1e-4 #dark current
-De_VIS = 1e-4
-De_NIR = 1e-3
-Re_UV = 0. #read noise
-Re_VIS = 0.
-Re_NIR = 0.018
+De_UV = 3e-5 #dark current
+De_VIS = 3e-5
+De_NIR = 2e-3
+Re_UV = 1e-2 #read noise
+Re_VIS = 1e-2
+Re_NIR = 2.5
+CIC_UV = 1.3E-3 #clock induced charge: counts/pix/photon count
+CIC_VIS = 1.3e-3
+CIC_NIR = 0.0
 Dtmax = 0.3 # max single exposure time - SLIDER
 wantsnr = 10. #for exposure time calculator - SLIDER
 gain = 1.
@@ -87,6 +93,9 @@ throughput_nir = 0.15
 o_throughput_uv = 0.12
 o_throughput_vis = 0.32
 o_throughput_nir = 0.6
+lammin_uv = 0.2
+lammin_vis = 0.4
+lammin_nir = 1.0
 
 # Template
 template = ''
@@ -122,6 +131,7 @@ Speckles=['Speckles']
 Dark_noise=['Dark Noise']
 Read_noise=['Read noise']
 Thermal_noise=['Thermal noise']
+ccic_label=['Clock induced charge']
 all_astro=['All astrophysical sources']
 all_noise=['All sources']
 
@@ -137,19 +147,21 @@ Rs_ = Rs
 ################################
 
 # Run coronagraph with default LUVOIR telescope 
-lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-    cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez, lammin=lammin, lammax=lammax, Res=Res, Res_UV = Res_UV, Res_NIR = Res_NIR, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr, gain=gain, Tput=throughput_vis,  Tput_uv = throughput_uv, Tput_nir = throughput_nir, o_Tput_uv = o_throughput_uv, o_Tput_vis = o_throughput_vis, o_Tput_nir = o_throughput_nir)
+lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, ccic, DtSNR = \
+    cg.count_rates(Ahr, lamhr, solhr, alpha,  Rp, Teff, Rs, r, d, Nez, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir, lammax=lammax, Res=Res, Res_UV = Res_UV, Res_NIR = Res_NIR, diam=diam, Tsys=Tsys, IWA=iwa, OWA=owa,De_UV=De_UV, De_VIS=De_VIS, De_NIR=De_NIR, Re_UV=Re_UV, Re_VIS=Re_VIS, Re_NIR=Re_NIR, CIC_UV=CIC_UV, CIC_VIS=CIC_VIS, CIC_NIR=CIC_NIR, Dtmax=Dtmax, GROUND=False, THERMAL=True,  wantsnr=wantsnr, gain=gain, Tput=throughput_vis,  Tput_uv = throughput_uv, Tput_nir = throughput_nir, o_Tput_uv = o_throughput_uv, o_Tput_vis = o_throughput_vis, o_Tput_nir = o_throughput_nir)
 #arg
 
 print 'ran coronagraph model' 
 
 
+
+
 # Calculate background photon count rates
-cb = (cz + cez + csp + cD + cR + cth)
+cb = (cz + cez + csp + cD + cR + cth + ccic)
 # Convert hours to seconds
 Dts = Dt * 3600.
-# Calculate signal-to-noise assuming background subtraction (the "2")
-SNR  = cp*Dts/np.sqrt((cp + 2*cb)*Dts)
+# Calculate signal-to-noise assuming background subtraction (the "2") !gna - removed the "2" at advice of Ty
+SNR  = cp*Dts/np.sqrt((cp + bg_factor*cb)*Dts)
 # Calculate 1-sigma errors
 sig= Cratio/SNR
 # Add gaussian noise to flux ratio
@@ -179,12 +191,12 @@ x_nirwidth = [0,0,0,0,0,0,0,0]
 
 
 #data
-planet = ColumnDataSource(data=dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts, planetrate=cp, czrate=cz, cezrate=cez, csprate=csp, cDrate=cD, cRrate=cR, ctherm=cth, castro=cp+cz+cez+csp, ctotal=cp+cz+cez+csp+cD+cR+cth))
+planet = ColumnDataSource(data=dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts, planetrate=cp, czrate=cz, cezrate=cez, csprate=csp, cDrate=cD, cRrate=cR, ctherm=cth, cCIC=ccic, castro=cp+cz+cez+csp, ctotal=cp+cz+cez+csp+cD+cR+cth+ccic))
 expplanet = ColumnDataSource(data=dict(lam=lam[np.isfinite(DtSNR)], DtSNR=DtSNR[np.isfinite(DtSNR)])) 
 plotyrange = ColumnDataSource(data = dict(yrange=yrange))
 compare = ColumnDataSource(data=dict(lam=lamC, cratio=Cratio*1e9)) 
 expcompare = ColumnDataSource(data=dict(lam=lam[np.isfinite(DtSNR)], DtSNR=DtSNR[np.isfinite(DtSNR)]*(-1000000))) #to make it not show up
-textlabel = ColumnDataSource(data=dict(label = planet_label, Planet=Planet, Exozodi=Exozodi, Zodi=Zodi, Speckles=Speckles, Dark_noise=Dark_noise, Read_noise=Read_noise, Thermal_noise=Thermal_noise,  all_astro=all_astro, all_noise=all_noise))
+textlabel = ColumnDataSource(data=dict(label = planet_label, Planet=Planet, Exozodi=Exozodi, Zodi=Zodi, Speckles=Speckles, Dark_noise=Dark_noise, Read_noise=Read_noise, Thermal_noise=Thermal_noise, ccic_label=ccic_label,  all_astro=all_astro, all_noise=all_noise))
 uv_bandpasses = ColumnDataSource(data=dict(x=x_uv, y=y_uv, width=x_uvwidth))
 vis_bandpasses = ColumnDataSource(data=dict(x=x_vis, y=y_vis, width=x_viswidth))
 nir_bandpasses = ColumnDataSource(data=dict(x=x_nir, y=y_nir, width=x_nirwidth))
@@ -263,6 +275,7 @@ counts_plot.line('lam','csprate',source=planet,line_width=2.0, color="#F0E442", 
 counts_plot.line('lam', 'cDrate',source=planet,line_width=2.0, color="#009E73", alpha=0.7,  name='counts_plot_hover')
 counts_plot.line('lam', 'cRrate',source=planet,line_width=2.0, color="#56B4E9", alpha=0.7,  name='counts_plot_hover')
 counts_plot.line('lam', 'ctherm',source=planet,line_width=2.0, color="#E69F00", alpha=0.7,  name='counts_plot_hover')
+counts_plot.line('lam', 'cCIC',source=planet,line_width=2.0, color="blue", alpha=0.7,  name='counts_plot_hover')
 counts_plot.line('lam', 'castro',source=planet,line_width=2.0, color="#999999", alpha=0.7,  name='counts_plot_hover')
 counts_plot.line('lam','ctotal',source=planet,line_width=2.0, color="black", alpha=0.7,  name='counts_plot_hover')
 #add labels
@@ -273,8 +286,10 @@ glyph4= Text(x=0.25, y=1e4, text="Speckles", text_font_size='9pt', text_font_sty
 glyph5= Text(x=0.25, y=3e3, text="Dark_noise", text_font_size='9pt', text_font_style='bold', text_color='#009E73')
 glyph6= Text(x=0.25, y=1e3, text="Read_noise", text_font_size='9pt', text_font_style='bold', text_color='#56B4E9')
 glyph7= Text(x=0.25, y=3e2, text="Thermal_noise", text_font_size='9pt', text_font_style='bold', text_color='#E69F00')
-glyph8= Text(x=0.25, y=1e2, text="all_astro", text_font_size='9pt', text_font_style='bold', text_color='#999999')
-glyph9= Text(x=0.25, y=3e1, text="all_noise", text_font_size='9pt', text_font_style='bold', text_color='black')
+glyph8= Text(x=0.25, y=1e2, text="ccic_label", text_font_size='9pt', text_font_style='bold', text_color='blue')
+glyph9= Text(x=0.25, y=3e1, text="all_astro", text_font_size='9pt', text_font_style='bold', text_color='#999999')
+glyph10= Text(x=0.25, y=1e1, text="all_noise", text_font_size='9pt', text_font_style='bold', text_color='black')
+
 counts_plot.add_glyph(textlabel, glyph1)
 counts_plot.add_glyph(textlabel, glyph2)
 counts_plot.add_glyph(textlabel, glyph3)
@@ -284,6 +299,8 @@ counts_plot.add_glyph(textlabel, glyph6)
 counts_plot.add_glyph(textlabel, glyph7)
 counts_plot.add_glyph(textlabel, glyph8)
 counts_plot.add_glyph(textlabel, glyph9)
+counts_plot.add_glyph(textlabel, glyph10)
+
 
 
 #text on plot
@@ -298,6 +315,8 @@ snr_plot.add_glyph(textlabel, glyph3)
 snr_plot.add_glyph(textlabel, glyph4)
 snr_plot.add_glyph(textlabel, glyph5)
 snr_plot.add_glyph(textlabel, glyph)
+
+
 
 #add bandpasses
 
@@ -444,6 +463,9 @@ counts_hover = HoverTool(names=['counts_plot_hover'], mode='mouse', tooltips = "
             <div>
                 <span style="font-size: 14px; font-weight: bold; color: #1D1B4D">thermal: @cth{int} counts </span>
             </div>
+            <div>
+                <span style="font-size: 14px; font-weight: bold; color: #1D1B4D">clock induced charge: @cCIC{int} counts </span>
+            </div>
               """)
 counts_plot.add_tools(counts_hover)
 
@@ -549,7 +571,9 @@ def update_data(attrname, old, new):
      #  resolution_UV.value = 10.
      #  resolution.value = 150.
      #  resolution_NIR.value = 150.
-       inner.value = 2.
+       inner.value = 3.5
+       inner_uv.value = 3.5
+       inner_nir.value = 2.
        outer.value = 64.
        throughput_vis.value = 0.15
        throughput_uv.value = 0.15
@@ -558,12 +582,15 @@ def update_data(attrname, old, new):
        o_throughput_vis.value = 0.32
        o_throughput_nir.value = 0.60 
       # mirror_type.value = 'Al'
-       darkcurrent_uv.value = 1e-4
-       darkcurrent_vis.value = 1e-4
-       darkcurrent_nir.value = 1e-3
-       readnoise_uv.value = 0
-       readnoise_vis.value = 0
-       readnoise_nir.value = 0.018
+       darkcurrent_uv.value = 3e-5
+       darkcurrent_vis.value = 3e-5
+       darkcurrent_nir.value = 2e-3
+       readnoise_uv.value = 1e-2
+       readnoise_vis.value = 1e-2
+       readnoise_nir.value = 2.5
+       cic_uv.value = 1.3e-3
+       cic_vis_value = 1.3-3
+       cic_nir.value = 0.
        LUVOIR_A = True
     if observatory.value == 'LUVOIR 9 m':
        diameter.value = 7.6
@@ -826,7 +853,7 @@ def update_data(attrname, old, new):
           solhr_ =  cg.noise_routines.Fstar(lamhr_, Teff_, Rs_, semimajor.value, AU=True)
           planet_label = ['Synthetic spectrum generated by K. Cahoy (Cahoy et al. 2010)']             
           
-       if template.value =='False O2 Planet (Orbiting F2V)':
+       if template.value =='False O2 Planet (orbiting F2V)':
           fn = 'fstarcloudy_geo_albedo.txt'
           fn = os.path.join(relpath, fn)
           model = np.loadtxt(fn, skiprows=0)
@@ -1054,16 +1081,17 @@ def update_data(attrname, old, new):
        ground_based_ = True
     
     # Run coronagraph 
-    lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, DtSNR = \
-     cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=darkcurrent_uv.value, De_VIS=darkcurrent_vis.value, De_NIR=darkcurrent_nir.value, Re_UV=readnoise_uv.value, Re_VIS=readnoise_vis.value, Re_NIR=readnoise_nir.value, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain=gain.value, Tput=throughput_vis.value,  Tput_uv = throughput_uv.value, Tput_nir = throughput_nir.value, o_Tput_uv = o_throughput_uv.value, o_Tput_vis = o_throughput_vis.value, o_Tput_nir = o_throughput_nir.value, C=contrast_, LUVOIR_A=LUVOIR_A)
+    lam, dlam, A, q, Cratio, cp, csp, cz, cez, cD, cR, cth, ccic, DtSNR = \
+    cg.count_rates(Ahr_, lamhr_, solhr_, alpha,  radius.value, Teff_, Rs_, semimajor.value, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value, Tsys=temperature.value, IWA=inner.value, IWA_UV=inner_uv.value, IWA_NIR=inner_nir.value, OWA=outer.value, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir, lammax=lammax, De_UV=darkcurrent_uv.value, De_VIS=darkcurrent_vis.value, De_NIR=darkcurrent_nir.value, Re_UV=readnoise_uv.value, Re_VIS=readnoise_vis.value, Re_NIR=readnoise_nir.value, CIC_UV=cic_uv.value, CIC_VIS = cic_vis.value, CIC_NIR = cic_nir.value, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain=gain.value, Tput=throughput_vis.value,  Tput_uv = throughput_uv.value, Tput_nir = throughput_nir.value, o_Tput_uv = o_throughput_uv.value, o_Tput_vis = o_throughput_vis.value, o_Tput_nir = o_throughput_nir.value, C=contrast_, LUVOIR_A=LUVOIR_A)
 
+    
     print 'ran coronagraph model'
     # Calculate background photon count rates
-    cb = (cz + cez + csp + cD + cR + cth)
+    cb = (cz + cez + csp + cD + cR + cth + ccic)
     # Convert hours to seconds
     Dts = exptime.value * 3600.
     # Calculate signal-to-noise assuming background subtraction (the "2")
-    SNR  = cp*Dts/np.sqrt((cp + 2*cb)*Dts)
+    SNR  = cp*Dts/np.sqrt((cp + bg_factor*cb)*Dts)
     # Calculate 1-sigma errors
     sig= Cratio/SNR
     # Add gaussian noise to flux ratio
@@ -1073,11 +1101,14 @@ def update_data(attrname, old, new):
     global lastlam
     global lastCratio
 
+    np.savetxt('last_run.txt', np.c_[lam, spec*1e9, Cratio*1e9, (spec-sig)*1e9, (spec+sig)*1e9],  delimiter='     ', comments='')      
+    
+    
     #UPDATE DATA
-    planet.data = dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts, planetrate=cp, czrate=cz, cezrate=cez, csprate=csp, cDrate=cD, cRrate=cR, castro=cp+cz+cez+csp, ctherm=cth, ctotal=cp+cz+cez+csp+cD+cR+cth)
+    planet.data = dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cDg=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts, planetrate=cp, czrate=cz, cezrate=cez, csprate=csp, cDrate=cD, cRrate=cR, cCIC = ccic, castro=cp+cz+cez+csp, ctherm=cth, ctotal=cp+cz+cez+csp+cD+cR+cth+ccic)
     expplanet.data = dict(lam=lam[np.isfinite(DtSNR)], DtSNR=DtSNR[np.isfinite(DtSNR)])
      #make the data the time for a given SNR if user wants this:
-    textlabel.data = dict(label=planet_label, Planet=Planet, Exozodi=Exozodi, Zodi=Zodi, Speckles=Speckles, Dark_noise=Dark_noise, Read_noise=Read_noise, Thermal_noise=Thermal_noise,  all_astro=all_astro, all_noise=all_noise)
+    textlabel.data = dict(label=planet_label, Planet=Planet, Exozodi=Exozodi, Zodi=Zodi, Speckles=Speckles, Dark_noise=Dark_noise, Read_noise=Read_noise, Thermal_noise=Thermal_noise,  all_astro=all_astro, all_noise=all_noise, ccic_label=ccic_label)
     if bandpass.value == "No":
        x_uv = [0,0,0,0,0,0]
        y_uv = [0,0,0,0,0,0]
@@ -1384,7 +1415,7 @@ def update_data(attrname, old, new):
           solhr_c =  cg.noise_routines.Fstar(lamhr_c, Teff_c, Rs_c, semimajor_c, AU=True)
           planet_label_c = ['Synthetic spectrum generated by K. Cahoy (Cahoy et al. 2010)']              
 
-      if comparison.value =='False O2 Planet (Orbiting F2V)':
+      if comparison.value =='False O2 Planet (orbiting F2V)':
           fn = 'fstarcloudy_geo_albedo.txt'
           fn = os.path.join(relpath, fn)
           model = np.loadtxt(fn, skiprows=0)
@@ -1844,12 +1875,12 @@ def update_data(attrname, old, new):
          distance_c
       except NameError:
          print "running comparison"
-         lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax,  De_UV=darkcurrent_uv.value, De_VIS=darkcurrent_vis.value, De_NIR=darkcurrent_nir.value, Re_UV=readnoise_uv.value, Re_VIS=readnoise_vis.value, Re_NIR=readnoise_nir.value, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value,  Tput=throughput_vis.value,  Tput_uv = throughput_uv.value, Tput_nir = throughput_nir.value, o_Tput_uv = o_throughput_uv.value, o_Tput_vis = o_throughput_vis.value, o_Tput_nir = o_throughput_nir.value,  C=contrast_, LUVOIR_A=LUVOIR_A)
+         lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, ccicC, DtSNRC = \
+         cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha,  radius_c, Teff_c, Rs_c, semimajor_c, distance.value, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value,  IWA=inner.value, IWA_UV=inner_uv.value, IWA_NIR=inner_nir.value, OWA=outer.value,lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir, lammax=lammax,  De_UV=darkcurrent_uv.value, De_VIS=darkcurrent_vis.value, De_NIR=darkcurrent_nir.value, Re_UV=readnoise_uv.value, Re_VIS=readnoise_vis.value, Re_NIR=readnoise_nir.value, CIC_UV=cic_uv.value, CIC_VIS = cic_vis.value, CIC_NIR = cic_nir.value, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value,  Tput=throughput_vis.value,  Tput_uv = throughput_uv.value, Tput_nir = throughput_nir.value, o_Tput_uv = o_throughput_uv.value, o_Tput_vis = o_throughput_vis.value, o_Tput_nir = o_throughput_nir.value,  C=contrast_, LUVOIR_A=LUVOIR_A)
       else:
          print "running comparison spectrum"
-         lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, DtSNRC = \
-          cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value, IWA=inner.value, OWA=outer.value, lammin=lammin, lammax=lammax, De_UV=darkcurrent_uv.value, De_VIS=darkcurrent_vis.value, De_NIR=darkcurrent_nir.value, Re_UV=readnoise_uv.value, Re_VIS=readnoise_vis.value, Re_NIR=readnoise_nir.value, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value, Tput=throughput_vis.value,  Tput_uv = throughput_uv.value, Tput_nir = throughput_nir.value, o_Tput_uv = o_throughput_uv.value, o_Tput_vis = o_throughput_vis.value, o_Tput_nir = o_throughput_nir.value, C=contrast_, LUVOIR_A=LUVOIR_A)
+         lamC, dlamC, AC, qC, CratioC, cpC, cspC, czC, cezC, cDC, cRC, cthC, ccicC, DtSNRC = \
+          cg.count_rates(Ahr_c, lamhr_c, solhr_c, alpha, radius_c, Teff_c, Rs_c, semimajor_c, distance_c, exozodi.value, diam=diameter.value, collect_area=collect_area, Res=resolution.value, Res_UV = resolution_UV.value, Res_NIR = resolution_NIR.value,Tsys=temperature.value,  IWA=inner.value, IWA_UV=inner_uv.value, IWA_NIR=inner_nir.value, OWA=outer.value, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir, lammax=lammax, De_UV=darkcurrent_uv.value, De_VIS=darkcurrent_vis.value, De_NIR=darkcurrent_nir.value, Re_UV=readnoise_uv.value, Re_VIS=readnoise_vis.value, Re_NIR=readnoise_nir.value, CIC_UV=cic_uv.value, CIC_VIS = cic_vis.value, CIC_NIR = cic_nir.value, Dtmax = dtmax.value, THERMAL=True, GROUND=ground_based_, wantsnr=want_snr.value, ntherm=ntherm.value, gain = gain.value, Tput=throughput_vis.value,  Tput_uv = throughput_uv.value, Tput_nir = throughput_nir.value, o_Tput_uv = o_throughput_uv.value, o_Tput_vis = o_throughput_vis.value, o_Tput_nir = o_throughput_nir.value, C=contrast_, LUVOIR_A=LUVOIR_A)
 
     if stargalaxy == 'true':
        #check for nans
@@ -1925,7 +1956,7 @@ exptime  = Slider(title="Integration time per bandpass (hours)", value=80., star
 exptime.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-distance = Slider(title="Distance (parsec)", value=10., start=1.28, end=50.0, step=0.2, callback_policy='mouseup', width=250) 
+distance = Slider(title="Distance (parsec)", value=7., start=1.28, end=50.0, step=0.2, callback_policy='mouseup', width=250) 
 distance.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
@@ -1961,8 +1992,16 @@ temperature  = Slider(title="Telescope Temperature (K)", value = 270.0, start=90
 temperature.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-inner  = Slider(title="Inner Working Angle factor x lambda/D", value = 2.0, start=1.22, end=6., step=0.2, callback_policy='mouseup') 
+inner_uv  = Slider(title="UV Inner Working Angle factor x lambda/D", value = 2.0, start=1.22, end=6., step=0.2, callback_policy='mouseup') 
+inner_uv.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
+inner  = Slider(title="Visible Inner Working Angle factor x lambda/D", value = 2.0, start=1.22, end=6., step=0.2, callback_policy='mouseup') 
 inner.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
+inner_nir  = Slider(title="NIR Inner Working Angle factor x lambda/D", value = 2.0, start=1.22, end=6., step=0.2, callback_policy='mouseup') 
+inner_nir.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
 outer  = Slider(title="Outer Working Angle factor x lambda/D", value = 64.0, start=10, end=100., step=1, callback_policy='mouseup') 
@@ -1981,16 +2020,28 @@ darkcurrent_nir  = Slider(title="NIR Dark Current (counts/s)", value = 1e-3, sta
 darkcurrent_nir.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-readnoise_uv  = Slider(title="UV Read noise (counts/pixel)", value = 0, start=0, end=0.05, step=0.01, callback_policy='mouseup') 
+readnoise_uv  = Slider(title="UV Read noise (counts/pixel)", value = 1e-2, start=1e-4, end=10, step=0.01, callback_policy='mouseup') 
 readnoise_uv.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-readnoise_vis  = Slider(title="VIS Read noise (counts/pixel)", value = 0, start=0, end=0.05, step=0.01, callback_policy='mouseup') 
+readnoise_vis  = Slider(title="VIS Read noise (counts/pixel)", value = 1e-2, start=1e-4, end=10, step=0.01, callback_policy='mouseup') 
 readnoise_vis.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-readnoise_nir  = Slider(title="NIR Read noise (counts/pixel)", value = 0.018, start=0, end=0.05, step=0.01, callback_policy='mouseup') 
+readnoise_nir  = Slider(title="NIR Read noise (counts/pixel)", value = 2.5, start=0, end=10, step=0.01, callback_policy='mouseup') 
 readnoise_nir.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
+cic_uv  = Slider(title="UV clock induced charge (counts/pixel/photon count)", value = 1.3e-3, start=0, end=1e-2, step=0.0001, callback_policy='mouseup') 
+cic_uv.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
+cic_vis  = Slider(title="VIS clock induced noise (counts/pixel)", value = 1.3e-3, start=0, end=1e-2, step=0.0001, callback_policy='mouseup') 
+cic_vis.callback = CustomJS(args=dict(source=source), code="""
+    source.data = { value: [cb_obj.value] }
+""")
+cic_nir  = Slider(title="NIR clock induced noise (counts/pixel)", value = 0, start=0, end=1e-2, step=0.0001, callback_policy='mouseup') 
+cic_nir.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
 dtmax  = Slider(title="Maximum single exposure time (hours)", value = 0.3, start=0.0003, end=3, step=0.0001, callback_policy='mouseup') 
@@ -2053,9 +2104,9 @@ starshade = Select(title="Simulate starshade-like observation?", value="No", opt
 observatory = Select(title="Simulate specific observatory?", value="No", options=["No",  "LUVOIR 15 m"]) #removed LUVOIR 9 m option for now at Aki's request 
 
 #select menu for planet
-template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU',"False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth' ])
+template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU',"False O2 Planet (orbiting F2V)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth' ])
 #select menu for comparison spectrum
-comparison = Select(title="Show comparison spectrum?", value ="none", options=["none", "Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU', "False O2 Planet (F2V star)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth', '-----','stars & galaxies:', '(arbitrary y units)', 'O5V star', 'B5V star', 'A5V star', 'F5V star', 'G2V star', 'G5V star', 'K2V star', 'M0V star', 'M2V star', 'M4V star', 'M5V star', 'Proxima Centauri star', 'T0 brown dwarf', 'T9 brown dwarf', 'L5 brown dwarf', 'L8 brown dwarf', 'NGC 337 spiral galaxy', 'NGC 660 peculiar galaxy', 'NGC 4621 elliptical galaxy', 'NGC 5033 spiral galaxy', 'Haro 6 blue compact dwarf galaxy', 'NGC 7476 spiral galaxy'])
+comparison = Select(title="Show comparison spectrum?", value ="none", options=["none", "Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU', "False O2 Planet (orbiting F2V)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth', '-----','stars & galaxies:', '(arbitrary y units)', 'O5V star', 'B5V star', 'A5V star', 'F5V star', 'G2V star', 'G5V star', 'K2V star', 'M0V star', 'M2V star', 'M4V star', 'M5V star', 'Proxima Centauri star', 'T0 brown dwarf', 'T9 brown dwarf', 'L5 brown dwarf', 'L8 brown dwarf', 'NGC 337 spiral galaxy', 'NGC 660 peculiar galaxy', 'NGC 4621 elliptical galaxy', 'NGC 5033 spiral galaxy', 'Haro 6 blue compact dwarf galaxy', 'NGC 7476 spiral galaxy'])
 
 #info text
 info_text = Div(text="""
@@ -2086,7 +2137,7 @@ ins_text = Div(text="""Choose the scaling factor for the inner working angle (IW
 oo = column(children=[obs_text,exptime,dtmax, ground_based, want_snr]) 
 pp = column(children=[planet_text, template, comparison, distance, radius, semimajor, exozodi]) 
 qq = column(children=[instruction0, text_input, instruction1, format_button_group, instruction2, link_box])
-ii = column(children=[ins_text, inner, outer,  resolution_UV, resolution, resolution_NIR, readnoise_uv, readnoise_vis, readnoise_nir, darkcurrent_uv, darkcurrent_vis, darkcurrent_nir])
+ii = column(children=[ins_text, inner_uv, inner, inner_nir, outer,  resolution_UV, resolution, resolution_NIR, readnoise_uv, readnoise_vis, readnoise_nir, darkcurrent_uv, darkcurrent_vis, darkcurrent_nir, cic_uv, cic_vis, cic_nir])
 tt = column(children=[tel_text, observatory,diameter,temperature, ntherm, bandpass, throughput_uv, throughput_vis, throughput_nir, o_throughput_uv, o_throughput_vis, o_throughput_nir, contrast])
 info = column(children=[info_text])
 
