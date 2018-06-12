@@ -364,7 +364,7 @@ def cdark(De, X, lam, D, theta, DNhpix, IMAGE=False, CIRC=True):
     
     return De*Npix
 
-def cread(Re, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=False):
+def cread(Re, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=True):
     """
     Read noise count rate (assuming detector has a maximum exposure time)
 
@@ -404,7 +404,7 @@ def cread(Re, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=False):
         Npix = 2*DNhpix*Npix
     return Npix/(Dtmax*3600.)*Re
 
-def ccic(Rc, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=False):
+def ccic(Rc, X, lam, D, theta, DNhpix, Dtmax, IMAGE=False, CIRC=True):
     """
     Clock induced charge count rate (not currently in use)
 
@@ -528,7 +528,7 @@ def f_airy_int(X):
     E = 4.*E # factor of 4 as integral only over one quadrant
     fpa   = E/E0
 
-def ctherm(q, X, lam, dlam, D, Tsys, emis):
+def ctherm(q, X, lam, dlam, D, Tsys, emis, T):
     """
     Telescope thermal count rate
     --------
@@ -559,7 +559,7 @@ def ctherm(q, X, lam, dlam, D, Tsys, emis):
     power   = c2/lambd/Tsys
     Bsys  = c1/( (lambd**5.)*(np.exp(power)-1.) )*1.e-6/np.pi # system Planck function (W/m**2/um/sr)
     Omega = np.pi*(X*lam*1.e-6/D)**2. # aperture size (sr**2)
-    return np.pi*q*dlam*emis*Bsys*Omega*(lam*1.e-6/hc)*(D/2)**2.
+    return T*np.pi*q*dlam*emis*Bsys*Omega*(lam*1.e-6/hc)*(D/2)**2.
 
 def ctherm_earth(q, X, lam, dlam, D, Itherm):
     """

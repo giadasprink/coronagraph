@@ -18,17 +18,17 @@ def count_rates(Ahr, lamhr, solhr,
                 mode   = "IFS",
                 filter_wheel = None,
                 Phi = -1, #chosen as a value a user would never set 
-                lammin = 0.45,
+                lammin = 0.4,
                 lammax = 2.5,
                 Res    = 70.0,
-                diam   = 6.5,
+                diam   = 10.0,
                 collect_area = -1,
                 Tput   = 0.15,
                 Tput_uv = 0.15,
                 Tput_nir = 0.15,
-                o_Tput_uv = 1.,
-                o_Tput_vis = 1.,
-                o_Tput_nir = 1.,
+                o_Tput_uv = 0.12,
+                o_Tput_vis = 0.32,
+                o_Tput_nir = 0.60,
                 C      = 1e-10,
                 IWA    = 3.0,
                 IWA_UV = -1,
@@ -38,19 +38,19 @@ def count_rates(Ahr, lamhr, solhr,
                 OWA_NIR = -1,
                 Tsys   = 150.0,
                 Tdet   = 50.0,
-                emis   = 0.7, #is this right? 
+                emis   = 0.09,
                 De_UV  = 3e-5, #BOL dark current 
                 De_VIS = 3e-5, #BOL dark current
                 De_NIR = 2e-3, #specs for teledyne detector
-                CIC_UV = 0.0,
-                CIC_VIS = 0.0,
+                CIC_UV = 1.3e-3,
+                CIC_VIS = 1.3e-3,
                 CIC_NIR = 0.0,
                 DNHpix = 3.0,
                 Re_UV  = 0.0, #Vis & UV (NIR will be different but not known yet)
                 Re_VIS = 0.0,
-                Re_NIR = 0.0, #was told 10 e- per pixel per 100 MHz 
+                Re_NIR = 0.01, #was told 10 e- per pixel per 100 MHz 
                 Dtmax  = 1.0,
-                X      = 1., #changed from 1.5 
+                X      = 0.7, #changed from 1.5 
                 qe     = 0.9,
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22
@@ -61,7 +61,7 @@ def count_rates(Ahr, lamhr, solhr,
                 lammin_nir = 1.0,
                 ntherm = 1,
                 gain = 1,
-                bg_factor = 1.,
+                bg_factor = 2.,
                 mirror = 'perfect', #choices = perfect, Al, Au
                 ssIWA = -1, #switched off if negative
                 ssOWA = -1, #switched off if negative
@@ -310,7 +310,7 @@ in    Parameters
     cR     =  cread(Re, X, lam, diam2, theta, DNHpix, Dtmax, IMAGE=IMAGE)     # readnoise count rate
 
     if THERMAL:
-        cth    =  ntherm*ctherm(q, X, lam, dlam, diam2, Tsys, emis)                      # internal thermal count rate
+        cth    =  ntherm*ctherm(q, X, lam, dlam, diam2, Tsys, emis, T)                      # internal thermal count rate
         cth = cth * gain
     else:
         cth = np.zeros_like(cp)

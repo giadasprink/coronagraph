@@ -46,16 +46,16 @@ relpath2 = os.path.join(os.path.dirname(__file__), stardir)
 ################################
 
 #background subtraction
-bg_factor = 1. #used to be 2
+bg_factor = 2. #
 
 # Integration time (hours)
 Dt = 80.0 # - SLIDER
 
 # Telescopes params
-diam = 12.7 # mirror diameter - SLIDER
+diam = 13.5 # mirror diameter - SLIDER
 Res = 140. # vis resolution - SLIDER
 Res_UV = 7. # UV resolution - SLIDER
-Res_NIR = 75. #NIR resolution - SLIDER
+Res_NIR = 70. #NIR resolution - SLIDER
 Tsys = 270. # system temperature - SLIDER
 
 # Planet params
@@ -563,9 +563,9 @@ def update_data(attrname, old, new):
     #if user has selected specific telscope, update parameters
     #note collect_area is currently a hidden variable...
     collect_area = -1 #set if user has not specified a given architecture
-    if observatory.value == 'LUVOIR 15 m':
-       diameter.value = 12.7
-       collect_area = 137.
+    if observatory.value == 'LUVOIR Architecture A':
+       diameter.value = 13.5
+       collect_area = 155. #this needs to be updated for A' 
        ntherm.value = 4.
        temperature.value = 270.
      #  resolution_UV.value = 10.
@@ -592,18 +592,35 @@ def update_data(attrname, old, new):
        cic_vis_value = 1.3-3
        cic_nir.value = 0.
        LUVOIR_A = True
-    if observatory.value == 'LUVOIR 9 m':
-       diameter.value = 7.6
-       collect_area = 49.7 #this is wrong. update when know right value.
+    if observatory.value == 'LUVOIR Architecture B (preliminary)':
+       diameter.value = 6.7
+       collect_area = 35. #this is wrong. update when know right value.
        ntherm.value = 4.
        temperature.value = 270.
-      # resolution.value = 150.
-      # resolution_NIR.value = 150.
-      # resolution_UV.value = 10.
-       inner.value = 2.
+     #  resolution_UV.value = 10.
+     #  resolution.value = 150.
+     #  resolution_NIR.value = 150.
+       inner.value = 3.5
+       inner_uv.value = 3.5
+       inner_nir.value = 2.
        outer.value = 64.
-       throughput.value = 0.1
-       exptime.value = 75.
+       throughput_vis.value = 0.15
+       throughput_uv.value = 0.15
+       throughput_nir.value = 0.15
+       o_throughput_uv.value = 0.12
+       o_throughput_vis.value = 0.32
+       o_throughput_nir.value = 0.60 
+      # mirror_type.value = 'Al'
+       darkcurrent_uv.value = 3e-5
+       darkcurrent_vis.value = 3e-5
+       darkcurrent_nir.value = 2e-3
+       readnoise_uv.value = 1e-2
+       readnoise_vis.value = 1e-2
+       readnoise_nir.value = 2.5
+       cic_uv.value = 1.3e-3
+       cic_vis_value = 1.3-3
+       cic_nir.value = 0.
+       LUVOIR_A = True #the LUVOIR_A flag is relevant to the throughput. Until I know what B's throughput is, I will use A's 
        
 # Read-in new spectrum file only if changed
     print 'lasttemplate is ', lasttemplate
@@ -1105,7 +1122,7 @@ def update_data(attrname, old, new):
     
     
     #UPDATE DATA
-    planet.data = dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cDg=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts, planetrate=cp, czrate=cz, cezrate=cez, csprate=csp, cDrate=cD, cRrate=cR, cCIC = ccic, castro=cp+cz+cez+csp, ctherm=cth, ctotal=cp+cz+cez+csp+cD+cR+cth+ccic)
+    planet.data = dict(lam=lam, cratio=Cratio*1e9, spec=spec*1e9, downerr=(spec-sig)*1e9, uperr=(spec+sig)*1e9, cz=cz*Dts, cez=cez*Dts, csp=csp*Dts, cD=cD*Dts, cR=cR*Dts, cth=cth*Dts, cp=cp*Dts, planetrate=cp, czrate=cz, cezrate=cez, csprate=csp, cDrate=cD, cRrate=cR, cCIC = ccic, castro=cp+cz+cez+csp, ctherm=cth, ctotal=cp+cz+cez+csp+cD+cR+cth+ccic)
     expplanet.data = dict(lam=lam[np.isfinite(DtSNR)], DtSNR=DtSNR[np.isfinite(DtSNR)])
      #make the data the time for a given SNR if user wants this:
     textlabel.data = dict(label=planet_label, Planet=Planet, Exozodi=Exozodi, Zodi=Zodi, Speckles=Speckles, Dark_noise=Dark_noise, Read_noise=Read_noise, Thermal_noise=Thermal_noise,  all_astro=all_astro, all_noise=all_noise, ccic_label=ccic_label)
@@ -1976,7 +1993,7 @@ diameter  = Slider(title="Encircled Mirror Diameter (meters)", value = 12.2, sta
 diameter.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
-resolution  = Slider(title="Telescope Visible Resolution (R)", value = 150.0, start=4.0, end=300., step=1., callback_policy='mouseup') 
+resolution  = Slider(title="Telescope Visible Resolution (R)", value = 140.0, start=4.0, end=300., step=1., callback_policy='mouseup') 
 resolution.callback = CustomJS(args=dict(source=source), code="""
     source.data = { value: [cb_obj.value] }
 """)
@@ -2101,7 +2118,7 @@ mirror_type = Select(title="Type of mirrors?", value="Al", options=["Al",  "Perf
 starshade = Select(title="Simulate starshade-like observation?", value="No", options=["No",  "Yes"])
 
 #observatory choice
-observatory = Select(title="Simulate specific observatory?", value="No", options=["No",  "LUVOIR 15 m"]) #removed LUVOIR 9 m option for now at Aki's request 
+observatory = Select(title="Simulate specific observatory?", value="No", options=["No",  "LUVOIR Architecture A", "LUVOIR Architecture B (preliminary)"]) #removed LUVOIR 9 m option for now at Aki's request 
 
 #select menu for planet
 template = Select(title="Planet Spectrum", value="Earth", options=["Earth",  "Archean Earth", "Hazy Archean Earth", "1% PAL O2 Proterozoic Earth", "0.1% PAL O2 Proterozoic Earth","Venus", "Early Mars", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",'-----','Warm Neptune at 2 AU', 'Warm Neptune w/o Clouds at 1 AU', 'Warm Neptune w/ Clouds at 1 AU','Warm Jupiter at 0.8 AU', 'Warm Jupiter at 2 AU',"False O2 Planet (orbiting F2V)", '-----', 'Proxima Cen b 10 bar 95% O2 dry', 'Proxima Cen b 10 bar 95% O2 wet', 'Proxima Cen b 10 bar O2-CO2', 'Proxima Cen b 90 bar O2-CO2', 'Proxima Cen b 90 bar Venus', 'Proxima Cen b 10 bar Venus', 'Proxima Cen b CO2/CO/O2 dry', 'Proxima Cen b Earth', 'Proxima Cen b Archean Earth', 'Proxima Cen b hazy Archean Earth' ])
