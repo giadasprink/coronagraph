@@ -573,7 +573,7 @@ def update_data(attrname, old, new):
      #  resolution_NIR.value = 150.
        inner.value = 3.5
        inner_uv.value = 3.5
-       inner_nir.value = 2.
+       inner_nir.value = 2.4
        outer.value = 64.
        throughput_vis.value = 0.15
        throughput_uv.value = 0.15
@@ -594,21 +594,21 @@ def update_data(attrname, old, new):
        LUVOIR_A = True
     if observatory.value == 'LUVOIR Architecture B (preliminary)':
        diameter.value = 6.7
-       collect_area = 35. #this is wrong. update when know right value.
+       collect_area = 43.8 #this is wrong. update when know right value.
        ntherm.value = 4.
        temperature.value = 270.
      #  resolution_UV.value = 10.
      #  resolution.value = 150.
      #  resolution_NIR.value = 150.
-       inner.value = 3.5
+       inner.value = 2.4
        inner_uv.value = 3.5
-       inner_nir.value = 2.
+       inner_nir.value = 2.4
        outer.value = 64.
-       throughput_vis.value = 0.15
-       throughput_uv.value = 0.15
-       throughput_nir.value = 0.15
-       o_throughput_uv.value = 0.12
-       o_throughput_vis.value = 0.32
+       throughput_vis.value = 0.18
+       throughput_uv.value = 0.18
+       throughput_nir.value = 0.18
+       o_throughput_uv.value = 0.48
+       o_throughput_vis.value = 0.48
        o_throughput_nir.value = 0.60 
       # mirror_type.value = 'Al'
        darkcurrent_uv.value = 3e-5
@@ -620,7 +620,7 @@ def update_data(attrname, old, new):
        cic_uv.value = 1.3e-3
        cic_vis_value = 1.3-3
        cic_nir.value = 0.
-       LUVOIR_A = True #the LUVOIR_A flag is relevant to the throughput. Until I know what B's throughput is, I will use A's 
+       LUVOIR_A = False #the LUVOIR_A flag is relevant to the throughput. Until I know what B's throughput is, I will use A's 
        
 # Read-in new spectrum file only if changed
     print 'lasttemplate is ', lasttemplate
@@ -2109,7 +2109,7 @@ contrast.callback = CustomJS(args=dict(source=source), code="""
 ground_based = Select(title="Simulate ground-based observation?", value="No", options=["No",  "Yes"])
 
 #bandpass choice
-bandpass = Select(title="Show LUVOIR bandpasses", value="No", options=["No",  "Yes"])
+bandpass = Select(title="Show Notional LUVOIR-A bandpasses", value="No", options=["No",  "Yes"])
 
 #mirror choice
 mirror_type = Select(title="Type of mirrors?", value="Al", options=["Al",  "Perfect"])

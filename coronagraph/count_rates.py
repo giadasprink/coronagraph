@@ -19,7 +19,7 @@ def count_rates(Ahr, lamhr, solhr,
                 filter_wheel = None,
                 Phi = -1, #chosen as a value a user would never set 
                 lammin = 0.4,
-                lammax = 2.5,
+                lammax = 2.,
                 Res    = 70.0,
                 diam   = 10.0,
                 collect_area = -1,
@@ -57,11 +57,11 @@ def count_rates(Ahr, lamhr, solhr,
                 Res_NIR = -1, 
                 Res_UV = -1,
                 lammin_uv = 0.2,
-                lammin_vis = 0.4,
+                lammin_vis = 0.5,
                 lammin_nir = 1.0,
                 ntherm = 1,
                 gain = 1,
-                bg_factor = 2.,
+                bg_factor = 2., #2 assumes roll manouver for noise calculation
                 mirror = 'perfect', #choices = perfect, Al, Au
                 ssIWA = -1, #switched off if negative
                 ssOWA = -1, #switched off if negative
