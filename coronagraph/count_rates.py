@@ -18,10 +18,11 @@ def count_rates(Ahr, lamhr, solhr,
                 mode   = "IFS",
                 filter_wheel = None,
                 Phi = -1, #chosen as a value a user would never set 
-                lammin = 0.4,
+                lammin = 0.55,
                 lammax = 2.,
-                Res    = 70.0,
-                diam   = 10.0,
+                Res    = 140.0,
+                diam   = 15.,
+                diam_ins = -1,
                 collect_area = -1,
                 Tput   = 0.15,
                 Tput_uv = 0.15,
@@ -30,10 +31,10 @@ def count_rates(Ahr, lamhr, solhr,
                 o_Tput_vis = 0.32,
                 o_Tput_nir = 0.60,
                 C      = 1e-10,
-                IWA    = 3.0,
+                IWA    = 3.5,
                 IWA_UV = -1,
                 IWA_NIR = -1,
-                OWA    = 20.0,
+                OWA    = 64.0,
                 OWA_UV = -1,
                 OWA_NIR = -1,
                 Tsys   = 150.0,
@@ -46,18 +47,18 @@ def count_rates(Ahr, lamhr, solhr,
                 CIC_VIS = 1.3e-3,
                 CIC_NIR = 0.0,
                 DNHpix = 3.0,
-                Re_UV  = 0.0, #Vis & UV (NIR will be different but not known yet)
+                Re_UV  = 0.0,
                 Re_VIS = 0.0,
-                Re_NIR = 0.01, #was told 10 e- per pixel per 100 MHz 
+                Re_NIR = 2.5,
                 Dtmax  = 1.0,
                 X      = 0.7, #changed from 1.5 
-                qe     = 0.9,
+                qe     = 0.675, #QE (0.9) times charge transfer term (0.75)
                 MzV    = 23.0, #23
                 MezV   = 22.0, #22
                 Res_NIR = -1, 
                 Res_UV = -1,
                 lammin_uv = 0.2,
-                lammin_vis = 0.5,
+                lammin_vis = 0.515,
                 lammin_nir = 1.0,
                 ntherm = 1,
                 gain = 1,
@@ -232,6 +233,11 @@ in    Parameters
     if collect_area != -1:
         diam2 = np.sqrt(collect_area/3.14159)*2.
 
+    #check if user has specified an inscribed circle
+    if diam_ins == -1:
+        diam_ins = diam
+ 
+        
     # Set wavelength grid
     if COMPUTE_LAM:
         lam, dlam = construct_lam(lammin, lammax, Res, UV=UV, NIR=NIR, Res_UV = Res_UV, Res_NIR = Res_NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
@@ -252,7 +258,7 @@ in    Parameters
     cic = set_cic(lam, CIC_UV, CIC_VIS, CIC_NIR, NIR=NIR, lammin_uv=lammin_uv, lammin_vis=lammin_vis, lammin_nir=lammin_nir)
     
     # Set Angular size of lenslet
-    theta = set_lenslet(lam, lammin, diam, NIR=NIR, UV=UV, lammin_vis = lammin_vis, lammin_nir=lammin_nir, lammin_uv=lammin_uv)
+    theta = set_lenslet(lam, lammin, diam_ins, NIR=NIR, UV=UV, lammin_vis = lammin_vis, lammin_nir=lammin_nir, lammin_uv=lammin_uv)
     
     # Set throughput
     sep  = r/d*np.sin(alpha*np.pi/180.)*np.pi/180./3600. # separation in radians
