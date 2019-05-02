@@ -295,7 +295,7 @@ in    Parameters
         Fs = solhr
 
     # Compute fluxes
-    #Fs = Fstar(lam, Teff, Rs, r, AU=True) # stellar flux on planet
+    Fs = Fstar(lam, Teff, Rs, r, AU=True) # stellar flux on planet
     Fp = Fplan(A, Phi, Fs, Rp, d)         # planet flux at telescope
     i =  (lam >= 0.54) & (lam <= 0.56)
 
